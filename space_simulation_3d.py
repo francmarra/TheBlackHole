@@ -91,6 +91,96 @@ class Star3D:
         else:
             return "Giant"
         
+    def update(self, time):
+        # Create twinkling effect with brighter range
+        twinkle = math.sin(time * self.twinkle_speed + self.twinkle_offset) * 0.4  # Increased from 0.3
+        self.current_brightness = max(0.3, self.brightness + twinkle)  # Increased minimum from 0.1
+        
+    def project_to_2d(self, camera_x, camera_y, camera_z, camera_pitch, camera_yaw):
+        # Translate relative to camera
+        dx = self.x - camera_x
+        dy = self.y - camera_y
+        dz = self.z - camera_z
+        
+        # Rotate around Y-axis (yaw)
+        cos_yaw = math.cos(camera_yaw)
+        sin_yaw = math.sin(camera_yaw)
+        
+        rotated_x = dx * cos_yaw - dz * sin_yaw
+        rotated_z = dx * sin_yaw + dz * cos_yaw
+        
+        # Rotate around X-axis (pitch)
+        cos_pitch = math.cos(camera_pitch)
+        sin_pitch = math.sin(camera_pitch)
+        
+        rotated_y = dy * cos_pitch - rotated_z * sin_pitch
+        final_z = dy * sin_pitch + rotated_z * cos_pitch
+        
+        # Skip if behind camera
+        if final_z <= 0.1:
+            return None
+            
+        # Perspective projection
+        focal_length = 400
+        screen_x = (rotated_x * focal_length) / final_z + SCREEN_WIDTH // 2
+        screen_y = (rotated_y * focal_length) / final_z + SCREEN_HEIGHT // 2
+        
+        # Calculate distance-based scale
+        distance = math.sqrt(dx*dx + dy*dy + dz*dz)
+        scale = max(0.1, 1.0 / (distance * 0.01 + 1))
+        
+        return screen_x, screen_y, final_z, scale
+        
+    def draw(self, screen, camera_x, camera_y, camera_z, camera_pitch, camera_yaw):
+        projection = self.project_to_2d(camera_x, camera_y, camera_z, camera_pitch, camera_yaw)
+        
+        if projection is None:
+            return
+            
+        screen_x, screen_y, depth, scale = projection
+        
+        # Skip if off screen
+        if screen_x < -50 or screen_x > SCREEN_WIDTH + 50 or screen_y < -50 or screen_y > SCREEN_HEIGHT + 50:
+            return
+        
+        # Apply brightness and distance to color with controlled saturation
+        distance_brightness = min(1.0, scale * 3)  # Reduced from 4 to 3
+        final_brightness = min(1.5, self.current_brightness * distance_brightness)  # Reduced max from 2.0 to 1.5
+        
+        # Apply color with moderate enhancement to avoid oversaturation
+        bright_color = tuple(max(0, min(255, int(c * final_brightness))) for c in self.color)
+        
+        # Calculate star size based on distance and original size - keep reasonable sizes
+        star_size = max(1, int(self.size * scale * 3))  # Reduced from 6 to 3 for sharper stars
+        
+        # Draw outer glow for larger stars only, with reduced blur
+        if star_size >= 3:
+            glow_radius = star_size + 1  # Much smaller glow radius
+            # Subtle glow
+            glow_color = tuple(max(0, min(255, int(c * 0.3))) for c in bright_color)  # Reduced glow intensity
+            pygame.draw.circle(screen, glow_color, (int(screen_x), int(screen_y)), glow_radius)
+        
+        # Draw main star with sharp edges - use anti-aliased circles for smoothness
+        if star_size >= 2:
+            pygame.draw.circle(screen, bright_color, (int(screen_x), int(screen_y)), star_size)
+            # Add a bright center pixel for sharpness
+            pygame.draw.circle(screen, (255, 255, 255), (int(screen_x), int(screen_y)), max(1, star_size // 2))
+        else:
+            # For small stars, just draw a simple pixel
+            pygame.draw.circle(screen, bright_color, (int(screen_x), int(screen_y)), star_size)
+        
+        # Draw sharp cross pattern for bigger stars
+        if star_size >= 2:
+            cross_length = star_size + 1  # Shorter cross lines
+            # Sharp, bright cross lines
+            cross_color = bright_color  # Use the same bright color
+            pygame.draw.line(screen, cross_color, 
+                           (int(screen_x - cross_length), int(screen_y)), 
+                           (int(screen_x + cross_length), int(screen_y)), 1)  # Thinner, sharper lines
+            pygame.draw.line(screen, cross_color, 
+                           (int(screen_x), int(screen_y - cross_length)), 
+                           (int(screen_x), int(screen_y + cross_length)), 1)
+
 class Sun3D(Star3D):
     def __init__(self, x, y, z):
         # Sun properties based on real astronomical data
@@ -99,7 +189,7 @@ class Sun3D(Star3D):
         sun_brightness = 2.0  # Very bright
         sun_mass = 1.9885e30  # Real Sun mass in kg
         
-        super().__init__(x, y, z, sun_size, sun_color, sun_brightness, sun_mass)
+        super().__init__(x, y, z, size=sun_size, color=sun_color, brightness=sun_brightness, mass=sun_mass)
         
         # Sun-specific properties
         self.volume = 1.412e18  # km³
@@ -229,239 +319,6 @@ class StarField3D:
             else:  # 10% bright large stars
                 size = random.uniform(2.5, 4.0)
                 brightness = random.uniform(1.0, 1.3)
-                
-            star = Star3D(x, y, z, size, brightness=brightness)
-            self.stars.append(star)
-    
-    def update(self, time):
-        for star in self.stars:
-            star.update(time)
-            
-    def draw(self, screen, camera_x, camera_y, camera_z, camera_pitch, camera_yaw):
-        # Sort stars by distance for proper rendering order
-        star_distances = []
-        for star in self.stars:
-            dx = star.x - camera_x
-            dy = star.y - camera_y
-            dz = star.z - camera_z
-            distance = dx*dx + dy*dy + dz*dz
-            star_distances.append((distance, star))
-        
-        # Sort by distance (far to near)
-        star_distances.sort(key=lambda x: x[0], reverse=True)
-        
-        # Draw stars
-        for distance, star in star_distances:
-            star.draw(screen, camera_x, camera_y, camera_z, camera_pitch, camera_yaw)
-        
-    def update(self, time):
-        # Create twinkling effect with brighter range
-        twinkle = math.sin(time * self.twinkle_speed + self.twinkle_offset) * 0.4  # Increased from 0.3
-        self.current_brightness = max(0.3, self.brightness + twinkle)  # Increased minimum from 0.1
-        
-    def project_to_2d(self, camera_x, camera_y, camera_z, camera_pitch, camera_yaw):
-        # Translate relative to camera
-        dx = self.x - camera_x
-        dy = self.y - camera_y
-        dz = self.z - camera_z
-        
-        # Rotate around Y-axis (yaw)
-        cos_yaw = math.cos(camera_yaw)
-        sin_yaw = math.sin(camera_yaw)
-        
-        rotated_x = dx * cos_yaw - dz * sin_yaw
-        rotated_z = dx * sin_yaw + dz * cos_yaw
-        
-        # Rotate around X-axis (pitch)
-        cos_pitch = math.cos(camera_pitch)
-        sin_pitch = math.sin(camera_pitch)
-        
-        rotated_y = dy * cos_pitch - rotated_z * sin_pitch
-        final_z = dy * sin_pitch + rotated_z * cos_pitch
-        
-        # Skip if behind camera
-        if final_z <= 0.1:
-            return None
-            
-        # Perspective projection
-        focal_length = 400
-        screen_x = (rotated_x * focal_length) / final_z + SCREEN_WIDTH // 2
-        screen_y = (rotated_y * focal_length) / final_z + SCREEN_HEIGHT // 2
-        
-        # Calculate distance-based scale
-        distance = math.sqrt(dx*dx + dy*dy + dz*dz)
-        scale = max(0.1, 1.0 / (distance * 0.01 + 1))
-        
-        return screen_x, screen_y, final_z, scale
-        
-    def draw(self, screen, camera_x, camera_y, camera_z, camera_pitch, camera_yaw):
-        projection = self.project_to_2d(camera_x, camera_y, camera_z, camera_pitch, camera_yaw)
-        
-        if projection is None:
-            return
-            
-        screen_x, screen_y, depth, scale = projection
-        
-        # Skip if off screen
-        if screen_x < -50 or screen_x > SCREEN_WIDTH + 50 or screen_y < -50 or screen_y > SCREEN_HEIGHT + 50:
-            return
-        
-        # Apply brightness and distance to color with controlled saturation
-        distance_brightness = min(1.0, scale * 3)  # Reduced from 4 to 3
-        final_brightness = min(1.5, self.current_brightness * distance_brightness)  # Reduced max from 2.0 to 1.5
-        
-        # Apply color with moderate enhancement to avoid oversaturation
-        bright_color = tuple(max(0, min(255, int(c * final_brightness))) for c in self.color)
-        
-        # Calculate star size based on distance and original size - keep reasonable sizes
-        star_size = max(1, int(self.size * scale * 3))  # Reduced from 6 to 3 for sharper stars
-        
-        # Draw outer glow for larger stars only, with reduced blur
-        if star_size >= 3:
-            glow_radius = star_size + 1  # Much smaller glow radius
-            # Subtle glow
-            glow_color = tuple(max(0, min(255, int(c * 0.3))) for c in bright_color)  # Reduced glow intensity
-            pygame.draw.circle(screen, glow_color, (int(screen_x), int(screen_y)), glow_radius)
-        
-        # Draw main star with sharp edges - use anti-aliased circles for smoothness
-        if star_size >= 2:
-            pygame.draw.circle(screen, bright_color, (int(screen_x), int(screen_y)), star_size)
-            # Add a bright center pixel for sharpness
-            pygame.draw.circle(screen, (255, 255, 255), (int(screen_x), int(screen_y)), max(1, star_size // 2))
-        else:
-            # For small stars, just draw a simple pixel
-            pygame.draw.circle(screen, bright_color, (int(screen_x), int(screen_y)), star_size)
-        
-        # Draw sharp cross pattern for bigger stars
-        if star_size >= 2:
-            cross_length = star_size + 1  # Shorter cross lines
-            # Sharp, bright cross lines
-            cross_color = bright_color  # Use the same bright color
-            pygame.draw.line(screen, cross_color, 
-                           (int(screen_x - cross_length), int(screen_y)), 
-                           (int(screen_x + cross_length), int(screen_y)), 1)  # Thinner, sharper lines
-            pygame.draw.line(screen, cross_color, 
-                           (int(screen_x), int(screen_y - cross_length)), 
-                           (int(screen_x), int(screen_y + cross_length)), 1)
-
-class Sun3D(Star3D):
-    def __init__(self, x, y, z):
-        # Sun properties based on real astronomical data
-        sun_size = 10.0  # Larger visual size for the Sun
-        sun_color = (255, 255, 150)  # Yellowish color
-        sun_brightness = 2.0  # Very bright
-        sun_mass = 1.9885e30  # Real Sun mass in kg
-        
-        super().__init__(x, y, z, sun_size, sun_color, sun_brightness, sun_mass)
-        
-        # Sun-specific properties
-        self.volume = 1.412e18  # km³
-        self.density = 1.408  # g/cm³
-        self.earth_mass_ratio = 332950  # Times Earth's mass
-        self.earth_volume_ratio = 1300000  # Times Earth's volume
-        self.is_sun = True
-        
-        # Enhanced visual properties for the Sun
-        self.corona_size = 15  # Corona glow size
-        self.flare_intensity = 0.5  # Solar flare effect
-        
-    def update(self, time):
-        # Sun has more complex twinkling (solar activity)
-        primary_twinkle = math.sin(time * 0.01) * 0.1
-        secondary_twinkle = math.sin(time * 0.03 + 1.5) * 0.05
-        solar_flare = math.sin(time * 0.02 + 2.0) * 0.1
-        
-        self.current_brightness = max(1.5, self.brightness + primary_twinkle + secondary_twinkle + solar_flare)
-        
-    def draw(self, screen, camera_x, camera_y, camera_z, camera_pitch, camera_yaw):
-        projection = self.project_to_2d(camera_x, camera_y, camera_z, camera_pitch, camera_yaw)
-        
-        if projection is None:
-            return
-            
-        screen_x, screen_y, depth, scale = projection
-        
-        # Skip if off screen
-        if screen_x < -100 or screen_x > SCREEN_WIDTH + 100 or screen_y < -100 or screen_y > SCREEN_HEIGHT + 100:
-            return
-        
-        # Sun is always visible and bright
-        distance_brightness = max(0.8, min(1.5, scale * 5))  # Sun stays bright at distance
-        final_brightness = min(2.5, self.current_brightness * distance_brightness)
-        
-        # Enhanced Sun color with brightness
-        bright_color = tuple(max(0, min(255, int(c * final_brightness))) for c in self.color)
-        
-        # Calculate Sun size (always significant)
-        sun_size = max(5, int(self.size * scale * 4))
-        
-        # Draw corona (outermost layer)
-        corona_radius = sun_size + int(self.corona_size * scale)
-        corona_color = tuple(max(0, min(255, int(c * 0.1))) for c in bright_color)
-        if corona_radius > 0:
-            pygame.draw.circle(screen, corona_color, (int(screen_x), int(screen_y)), corona_radius)
-        
-        # Draw outer atmosphere
-        atmosphere_radius = sun_size + int(8 * scale)
-        atmosphere_color = tuple(max(0, min(255, int(c * 0.3))) for c in bright_color)
-        if atmosphere_radius > 0:
-            pygame.draw.circle(screen, atmosphere_color, (int(screen_x), int(screen_y)), atmosphere_radius)
-        
-        # Draw main Sun body
-        pygame.draw.circle(screen, bright_color, (int(screen_x), int(screen_y)), sun_size)
-        
-        # Draw bright core
-        core_size = max(2, sun_size // 2)
-        core_color = (255, 255, 255)  # White hot core
-        pygame.draw.circle(screen, core_color, (int(screen_x), int(screen_y)), core_size)
-        
-        # Draw solar flares (cross pattern)
-        flare_length = sun_size + int(10 * scale)
-        flare_color = tuple(max(0, min(255, int(c * 0.8))) for c in bright_color)
-        
-        # Main cross
-        pygame.draw.line(screen, flare_color, 
-                       (int(screen_x - flare_length), int(screen_y)), 
-                       (int(screen_x + flare_length), int(screen_y)), 3)
-        pygame.draw.line(screen, flare_color, 
-                       (int(screen_x), int(screen_y - flare_length)), 
-                       (int(screen_x), int(screen_y + flare_length)), 3)
-        
-        # Diagonal cross for extra solar effect
-        diagonal_length = int(flare_length * 0.7)
-        pygame.draw.line(screen, flare_color, 
-                       (int(screen_x - diagonal_length), int(screen_y - diagonal_length)), 
-                       (int(screen_x + diagonal_length), int(screen_y + diagonal_length)), 2)
-        pygame.draw.line(screen, flare_color, 
-                       (int(screen_x - diagonal_length), int(screen_y + diagonal_length)), 
-                       (int(screen_x + diagonal_length), int(screen_y - diagonal_length)), 2)
-    
-    def get_mass_category(self):
-        return "Sun"
-    def __init__(self, num_stars=800):
-        self.stars = []
-        self.generate_stars(num_stars)
-        
-    def generate_stars(self, num_stars):
-        """Generate a 3D distribution of stars"""
-        for _ in range(num_stars):
-            # Generate stars in a large 3D space
-            x = random.randint(-3000, 3000)
-            y = random.randint(-3000, 3000)
-            z = random.randint(-3000, 3000)
-            
-            # Create different types of stars with different probabilities
-            star_type = random.random()
-            
-            if star_type < 0.7:  # 70% small dim stars
-                size = random.uniform(0.5, 1.5)
-                brightness = random.uniform(0.6, 0.9)  # Increased from 0.3-0.6
-            elif star_type < 0.9:  # 20% medium stars
-                size = random.uniform(1.5, 2.5)
-                brightness = random.uniform(0.8, 1.0)  # Increased from 0.6-0.8
-            else:  # 10% bright large stars
-                size = random.uniform(2.5, 4.0)
-                brightness = random.uniform(1.0, 1.3)  # Increased from 0.8-1.0
                 
             star = Star3D(x, y, z, size, brightness=brightness)
             self.stars.append(star)

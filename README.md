@@ -5,6 +5,7 @@ A stunning 3D space simulation program that creates realistic star fields in thr
 ## Features
 
 - **True 3D Space**: Navigate through a 3D star field with realistic perspective projection
+- **The Sun at the Center**: A glowing Sun at the origin with real astronomical mass and size
 - **800 3D Stars**: Stars distributed throughout a massive 6000x6000x6000 unit space
 - **Realistic Star Field**: Different sizes, colors, and brightness levels with distance-based scaling
 - **Twinkling Effect**: Stars twinkle naturally with varying intensities
@@ -60,14 +61,12 @@ python space_simulation.py
 
 ## What's Next
 
-This 3D star field simulation is the foundation for building a complete 3D star system. Future enhancements will include:
+The project is being developed step by step. See [ROADMAP.md](ROADMAP.md) for the full plan, which includes:
 
-- **3D Planetary Systems**: Planets orbiting around stars in 3D space
-- **3D Asteroid Belts**: Realistic asteroid fields with proper 3D physics
-- **3D Nebulae**: Volumetric gas clouds and nebulae
-- **3D Black Holes**: Gravitational lensing effects and event horizons
-- **3D Spaceships**: Fully controllable spacecraft with 3D physics
-- **Realistic 3D Physics**: Orbital mechanics and gravitational interactions
+- **Real Gravity**: Orbital mechanics with a Velocity Verlet integrator
+- **Planetary Systems**: Planets orbiting the Sun, with orbit trails
+- **Black Holes**: Event horizon, accretion disk and gravitational lensing
+- **Tests & CI**: Automated tests with pytest and GitHub Actions
 
 ## Technical Details
 
@@ -81,9 +80,10 @@ The 3D simulation uses:
 
 ## File Structure
 
-- `space_simulation_3d.py` - Main 3D simulation with full 3D movement
+- `space_simulation_3d.py` - Main 3D simulation with full 3D movement and the Sun
 - `space_simulation.py` - Original 2D simulation with camera controls
 - `requirements.txt` - Python dependencies
+- `ROADMAP.md` - Development plan and progress log
 - `README.md` - This file
 
 Enjoy exploring the 3D cosmos! 🌟🚀
