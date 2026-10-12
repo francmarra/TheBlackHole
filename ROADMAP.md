@@ -17,7 +17,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 - [x] **Dia 1** — Escolher uma versão 3D (a `_fixed` está limpa; a `space_simulation_3d.py` tem classes duplicadas), apagar a outra e atualizar o README
 - [ ] **Dia 2** — Adicionar `.gitignore`, `LICENSE` (MIT) e atualizar o `requirements.txt` para versões recentes
 - [ ] **Dia 3** — Reorganizar em pacote: `src/theblackhole/` com `star.py`, `sun.py`, `starfield.py`, `main.py`
-- [ ] **Dia 4** — Extrair uma classe `Camera` (posição, pitch, yaw, `project()`) e remover a lógica repetida nas estrelas
+- [x] **Dia 4** — Extrair uma classe `Camera` (posição, pitch, yaw, `project()`) e remover a lógica repetida nas estrelas *(feito no dia 2, junto com o planeta)*
 - [ ] **Dia 5** — Criar `config.py` com todas as constantes (ecrã, cores, velocidades)
 - [ ] **Dia 6** — Primeiros testes com `pytest` (projeção 3D→2D, rotação da câmara)
 - [ ] **Dia 7** — GitHub Actions: CI com `ruff` + `pytest` a cada push
@@ -59,3 +59,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | Dia | Data | O que fiz |
 |-----|------|-----------|
 | 1 | 2026-10-09 | Removida a versão 3D partida (classes duplicadas); a versão limpa passou a `space_simulation_3d.py`; README atualizado |
+| 2 | 2026-10-12 | **Extra:** planeta esférico com jogador em 3ª pessoa (andar, correr, saltar), dia/noite, câmara livre com TAB; classe `Camera` (Dia 4) |
