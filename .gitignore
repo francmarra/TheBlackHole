@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Editores
+.vscode/
+.idea/
+
+# Build (PyInstaller)
+build/
+dist/
+*.spec
+
+# Caches de ferramentas
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Sistema
+Thumbs.db
+.DS_Store
