@@ -35,17 +35,22 @@ A 3D space simulation with a custom renderer written in Python. Walk on a planet
 
 ## Installation
 
-1. Install Python 3.7 or higher
-2. Install the required dependencies:
+1. Install Python 3.10 or higher
+2. Install the package and its dependencies (from the project folder):
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
 ## Running the Simulation
 
 ### 3D Version (Recommended)
 ```bash
-python space_simulation_3d.py
+theblackhole
+```
+or, without installing (after `pip install -r requirements.txt`):
+```bash
+cd src
+python -m theblackhole
 ```
 
 ### 2D Version (Original)
@@ -83,8 +88,16 @@ The 3D renderer is written from scratch (no OpenGL):
 
 ## File Structure
 
-- `space_simulation_3d.py` - Main 3D simulation: planet explorer and free camera
+- `src/theblackhole/` - The 3D simulation package
+  - `main.py` - Main loop: planet explorer and free camera
+  - `config.py` - Constants (screen, camera, planet, player)
+  - `camera.py` - 3D camera and projection
+  - `render.py` - Near-plane clipping, painter's algorithm and shading
+  - `star.py`, `sun.py`, `starfield.py` - Stars, the Sun and the star field
+  - `planet.py` - Cube-sphere planet mesh
+  - `player.py` - The astronaut
 - `space_simulation.py` - Original 2D simulation with camera controls
+- `pyproject.toml` - Package metadata and the `theblackhole` command
 - `requirements.txt` - Python dependencies
 - `ROADMAP.md` - Development plan and progress log
 - `README.md` - This file

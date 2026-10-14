@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "theblackhole"
+version = "0.1.0"
+description = "A 3D space simulation with a custom renderer written in Python"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Francisco Brandão Marracho" }]
+requires-python = ">=3.10"
+dependencies = [
+    "pygame-ce==2.5.8",
+    "numpy==2.3.1",
+]
+
+[project.scripts]
+theblackhole = "theblackhole.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
