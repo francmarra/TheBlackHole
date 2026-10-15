@@ -3,12 +3,13 @@
 import math
 import random
 
+from .config import NUM_STARS, STAR_MIN_SUN_DISTANCE, STARFIELD_EXTENT
 from .star import Star3D
 from .sun import Sun3D
 
 
 class StarField3D:
-    def __init__(self, num_stars=800, clear_zones=()):
+    def __init__(self, num_stars=NUM_STARS, clear_zones=()):
         self.stars = []
         self.sun = None
         self.clear_zones = clear_zones  # (center, radius) regions kept free of stars
@@ -26,13 +27,13 @@ class StarField3D:
         # Generate other stars around the Sun
         while len(self.stars) < num_stars:
             # Generate stars in a large 3D space around the Sun
-            x = random.randint(-3000, 3000)
-            y = random.randint(-3000, 3000)
-            z = random.randint(-3000, 3000)
+            x = random.randint(-STARFIELD_EXTENT, STARFIELD_EXTENT)
+            y = random.randint(-STARFIELD_EXTENT, STARFIELD_EXTENT)
+            z = random.randint(-STARFIELD_EXTENT, STARFIELD_EXTENT)
 
             # Avoid placing stars too close to the Sun
             distance_from_sun = math.sqrt(x*x + y*y + z*z)
-            if distance_from_sun < 50:  # Minimum distance from Sun
+            if distance_from_sun < STAR_MIN_SUN_DISTANCE:
                 continue
 
             # Keep stars away from planets so they never float next to the player

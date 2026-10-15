@@ -6,7 +6,7 @@ import numpy as np
 import pygame
 
 from .camera import normalize
-from .config import GRAVITY, JUMP_SPEED, NEAR_PLANE
+from .config import BACKPACK, GRAVITY, JUMP_SPEED, NEAR_PLANE, SUIT, SUIT_DARK, VISOR
 from .render import draw_faces, shade_color
 
 # Corner order inside a box: index = x_bit * 4 + y_bit * 2 + z_bit
@@ -19,10 +19,6 @@ BOX_FACES = [
     ([1, 3, 7, 5], (0, 0, 1)),
 ]
 
-SUIT = (230, 230, 235)
-SUIT_DARK = (190, 190, 200)
-BACKPACK = (150, 150, 165)
-VISOR = (235, 170, 60)
 
 
 class Player:

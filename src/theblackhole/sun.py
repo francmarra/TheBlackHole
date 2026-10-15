@@ -4,7 +4,7 @@ import math
 
 import pygame
 
-from .config import SCREEN_HEIGHT, SCREEN_WIDTH
+from .config import SCREEN_HEIGHT, SCREEN_WIDTH, SUN_COLOR
 from .star import Star3D
 
 
@@ -12,7 +12,7 @@ class Sun3D(Star3D):
     def __init__(self, x, y, z):
         # Sun properties based on real astronomical data
         sun_size = 10.0  # Larger visual size for the Sun
-        sun_color = (255, 255, 150)  # Yellowish color
+        sun_color = SUN_COLOR
         sun_brightness = 2.0  # Very bright
         sun_mass = 1.9885e30  # Real Sun mass in kg
 

@@ -9,7 +9,23 @@ import pygame
 from .camera import Camera, normalize
 from .config import (
     BLACK,
+    CAMERA_DISTANCE,
+    CAMERA_ELEVATION,
+    CAMERA_ELEVATION_MAX,
+    CAMERA_ELEVATION_MIN,
+    CAMERA_ZOOM_MAX,
+    CAMERA_ZOOM_MIN,
+    CAMERA_ZOOM_STEP,
     FPS,
+    FREE_CAMERA_BOOST,
+    FREE_CAMERA_ROTATION_SPEED,
+    FREE_CAMERA_SPEED,
+    HUD_STATUS_COLOR,
+    HUD_TEXT_COLOR,
+    MAX_FRAME_TIME,
+    MOUSE_SENSITIVITY,
+    NUM_STARS,
+    PLANET_STAR_CLEAR_RADIUS,
     PLANET_CENTER,
     PLANET_RADIUS,
     RUN_SPEED,
@@ -41,18 +57,18 @@ class SpaceSimulation3D:
         self.mode = "planet"  # "planet" = third person on the planet, "free" = free-fly camera
 
         # Third-person camera
-        self.camera_distance = 14.0
-        self.camera_elevation = 0.25  # Radians above the player's horizon
+        self.camera_distance = CAMERA_DISTANCE
+        self.camera_elevation = CAMERA_ELEVATION  # Radians above the player's horizon
 
         # Free camera
         self.free_position = np.zeros(3)
         self.free_yaw = 0.0
         self.free_pitch = 0.0
-        self.free_speed = 600.0
-        self.rotation_speed = 1.2  # radians per second
+        self.free_speed = FREE_CAMERA_SPEED
+        self.rotation_speed = FREE_CAMERA_ROTATION_SPEED
 
         # Mouse control variables
-        self.mouse_sensitivity = 0.003
+        self.mouse_sensitivity = MOUSE_SENSITIVITY
         self.mouse_captured = False
 
         self.update_camera()
@@ -71,7 +87,7 @@ class SpaceSimulation3D:
         return Player(self.planet, normal, heading)
 
     def new_star_field(self):
-        self.star_field = StarField3D(800, clear_zones=[(tuple(self.planet.center), 1200)])
+        self.star_field = StarField3D(NUM_STARS, clear_zones=[(tuple(self.planet.center), PLANET_STAR_CLEAR_RADIUS)])
         sun = self.star_field.sun
         self.star_field.sun_position = np.array([sun.x, sun.y, sun.z], dtype=float)
 
@@ -105,7 +121,7 @@ class SpaceSimulation3D:
                     pygame.mouse.set_visible(not self.mouse_captured)
                     pygame.event.set_grab(self.mouse_captured)
             elif event.type == pygame.MOUSEWHEEL and self.mode == "planet":
-                self.camera_distance = max(5.0, min(60.0, self.camera_distance - event.y * 1.5))
+                self.camera_distance = max(CAMERA_ZOOM_MIN, min(CAMERA_ZOOM_MAX, self.camera_distance - event.y * CAMERA_ZOOM_STEP))
             elif event.type == pygame.MOUSEMOTION and self.mouse_captured:
                 mouse_x, mouse_y = event.rel
                 if self.mode == "planet":
@@ -123,7 +139,7 @@ class SpaceSimulation3D:
             self.handle_free_camera_keys(keys, dt)
 
     def tilt_camera(self, amount):
-        self.camera_elevation = max(-0.08, min(1.4, self.camera_elevation + amount))
+        self.camera_elevation = max(CAMERA_ELEVATION_MIN, min(CAMERA_ELEVATION_MAX, self.camera_elevation + amount))
 
     def handle_player_keys(self, keys, dt):
         speed = (RUN_SPEED if keys[pygame.K_LSHIFT] else WALK_SPEED) * dt
@@ -135,7 +151,7 @@ class SpaceSimulation3D:
         self.tilt_camera((keys[pygame.K_DOWN] - keys[pygame.K_UP]) * self.rotation_speed * dt)
 
     def handle_free_camera_keys(self, keys, dt):
-        speed = self.free_speed * (5 if keys[pygame.K_LSHIFT] else 1) * dt
+        speed = self.free_speed * (FREE_CAMERA_BOOST if keys[pygame.K_LSHIFT] else 1) * dt
         cos_yaw = math.cos(self.free_yaw)
         sin_yaw = math.sin(self.free_yaw)
         forward = np.array([sin_yaw, 0.0, cos_yaw])
@@ -250,8 +266,8 @@ class SpaceSimulation3D:
                 f"Mouse Look: {'ON' if self.mouse_captured else 'OFF'}",
             ]
 
-        self.draw_text_lines(instructions, 10, (200, 200, 200), WHITE)
-        self.draw_text_lines(status_info, SCREEN_WIDTH - 280, (150, 150, 150))
+        self.draw_text_lines(instructions, 10, HUD_TEXT_COLOR, WHITE)
+        self.draw_text_lines(status_info, SCREEN_WIDTH - 280, HUD_STATUS_COLOR)
 
         # Crosshair
         if self.mouse_captured and self.mode == "free":
@@ -263,7 +279,7 @@ class SpaceSimulation3D:
 
     def run(self):
         while self.running:
-            dt = min(self.clock.tick(FPS) / 1000.0, 0.05)
+            dt = min(self.clock.tick(FPS) / 1000.0, MAX_FRAME_TIME)
             self.handle_events(dt)
             self.update(dt)
             self.draw()

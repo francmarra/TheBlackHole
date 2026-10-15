@@ -31,3 +31,48 @@ RUN_SPEED = 25.0
 TURN_SPEED = 2.0      # radians per second
 JUMP_SPEED = 10.0
 GRAVITY = 25.0
+SUN_COLOR = (255, 255, 150)
+
+# Starfield
+NUM_STARS = 800
+STARFIELD_EXTENT = 3000      # stars spawn in [-extent, extent] on each axis
+STAR_MIN_SUN_DISTANCE = 50
+PLANET_STAR_CLEAR_RADIUS = 1200
+
+# Third-person camera
+CAMERA_DISTANCE = 14.0
+CAMERA_ZOOM_MIN = 5.0
+CAMERA_ZOOM_MAX = 60.0
+CAMERA_ZOOM_STEP = 1.5
+CAMERA_ELEVATION = 0.25      # radians above the player's horizon
+CAMERA_ELEVATION_MIN = -0.08
+CAMERA_ELEVATION_MAX = 1.4
+
+# Free camera
+FREE_CAMERA_SPEED = 600.0
+FREE_CAMERA_BOOST = 5        # multiplier while holding Shift
+FREE_CAMERA_ROTATION_SPEED = 1.2  # radians per second
+MOUSE_SENSITIVITY = 0.003
+
+# Planet mesh / colours
+PLANET_NEAR_DETAIL = 72
+PLANET_FAR_DETAIL = 16
+PLANET_LOD_DISTANCE = 4      # switch to far mesh beyond this many radii
+DEEP_OCEAN = (25, 60, 140)
+SHALLOW_OCEAN = (45, 115, 185)
+GRASS = (70, 140, 60)
+ROCK = (130, 110, 75)
+ICE = (225, 235, 245)
+
+# Astronaut
+SUIT = (230, 230, 235)
+SUIT_DARK = (190, 190, 200)
+BACKPACK = (150, 150, 165)
+VISOR = (235, 170, 60)
+
+# HUD
+HUD_TEXT_COLOR = (200, 200, 200)
+HUD_STATUS_COLOR = (150, 150, 150)
+
+# Main loop
+MAX_FRAME_TIME = 0.05        # seconds; clamps dt after stalls

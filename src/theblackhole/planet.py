@@ -5,7 +5,20 @@ import math
 import numpy as np
 import pygame
 
-from .config import AMBIENT_LIGHT, NEAR_PLANE, SCREEN_HEIGHT, SCREEN_WIDTH
+from .config import (
+    AMBIENT_LIGHT,
+    DEEP_OCEAN,
+    GRASS,
+    ICE,
+    NEAR_PLANE,
+    PLANET_FAR_DETAIL,
+    PLANET_LOD_DISTANCE,
+    PLANET_NEAR_DETAIL,
+    ROCK,
+    SCREEN_HEIGHT,
+    SCREEN_WIDTH,
+    SHALLOW_OCEAN,
+)
 from .render import clip_polygon_near
 
 
@@ -17,8 +30,8 @@ class Planet:
         self.radius = radius
         rng = np.random.default_rng(seed)
         # Detailed mesh for walking on the surface, cheap one for viewing from far away
-        self.near_mesh = self._build_mesh(72, rng)
-        self.far_mesh = self._build_mesh(16, rng)
+        self.near_mesh = self._build_mesh(PLANET_NEAR_DETAIL, rng)
+        self.far_mesh = self._build_mesh(PLANET_FAR_DETAIL, rng)
 
     def _build_mesh(self, subdivisions, rng):
         """Build a "cube sphere": a subdivided cube pushed out into a sphere.
@@ -75,11 +88,11 @@ class Planet:
         """Paint oceans, land and ice caps."""
         continents, detail, is_land, is_ice = cls._terrain(normals)
 
-        deep_ocean = np.array([25, 60, 140])
-        shallow_ocean = np.array([45, 115, 185])
-        grass = np.array([70, 140, 60])
-        rock = np.array([130, 110, 75])
-        ice = np.array([225, 235, 245])
+        deep_ocean = np.array(DEEP_OCEAN)
+        shallow_ocean = np.array(SHALLOW_OCEAN)
+        grass = np.array(GRASS)
+        rock = np.array(ROCK)
+        ice = np.array(ICE)
 
         t_sea = np.clip(1 + continents * 3, 0, 1)[:, None]
         sea = deep_ocean * (1 - t_sea) + shallow_ocean * t_sea
@@ -94,7 +107,7 @@ class Planet:
     def draw(self, screen, camera, light_dir):
         distance = np.linalg.norm(camera.position - self.center)
         vertices, faces, normals, centers, colors = (
-            self.near_mesh if distance < self.radius * 4 else self.far_mesh)
+            self.near_mesh if distance < self.radius * PLANET_LOD_DISTANCE else self.far_mesh)
 
         # Back-face culling: keep only the faces turned towards the camera
         facing = np.einsum("ij,ij->i", centers - camera.position, normals) < 0
