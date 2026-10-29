@@ -113,3 +113,20 @@ DISK_DRAG = 0.01              # Fraction of speed lost per second: the gas slowl
 ROCK_SPEED = 300.0            # Speed of rocks thrown with F
 ROCK_RADIUS = 6.0
 ROCK_COLOR = (160, 150, 140)
+
+# Galaxy scene
+GALAXY_STARS = 3000
+GALAXY_RADIUS = 2000.0
+GALAXY_CORE_RADIUS = 150.0    # Inside this the rotation speed ramps up from zero
+GALAXY_ROTATION_SPEED = 150.0  # Flat rotation curve (dark matter halo): same speed at every radius
+GALAXY_ARMS = 2
+GALAXY_ARM_TWIST = 0.35       # Pitch of the logarithmic spiral arms
+GALAXY_ARM_COLOR = (150, 190, 255)    # Young blue stars
+GALAXY_CORE_COLOR = (255, 220, 160)   # Old yellow stars
+GALAXY_START_CAMERA = (0.0, 1800.0, -2600.0)
+GALAXY_BLACK_HOLE_MASS = 1.0e6
+
+# Menu
+MENU_TITLE_COLOR = (255, 200, 120)
+MENU_ITEM_COLOR = (200, 200, 200)
+MENU_SELECTED_COLOR = (255, 255, 255)

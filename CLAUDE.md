@@ -15,8 +15,9 @@ Simulação 3D com renderer próprio (pygame-ce + NumPy). Plano diário em `ROAD
 | `solar_system.py` | `SolarSystem`, `OrbitingPlanet` (planetas em órbita do Sol, rastos) |
 | `timecontrol.py` | `TimeControl` (pausa e velocidade da simulação) |
 | `blackhole.py` | `schwarzschild_radius`, `BlackHole` (horizonte, sombra), `BlackHoleScene` (cena da tecla B) |
+| `galaxy.py` | `rotation_speed`, `Galaxy` (3000 estrelas, curva de rotação plana), `GalaxyScene` |
 | `glow.py` | `glow_sprite` (cache), `draw_glow` (brilho com `BLEND_ADD`) |
-| `main.py` | `SpaceSimulation3D` (loop, input, câmara 3.ª pessoa/livre, HUD) + `main()` |
+| `main.py` | `SpaceSimulation3D` (menu inicial, cenários `solar`/`blackhole`/`galaxy`, input, câmaras, HUD) + `main()` |
 
 `space_simulation.py` na raiz = versão 2D antiga (não mexer).
 
@@ -26,7 +27,7 @@ Simulação 3D com renderer próprio (pygame-ce + NumPy). Plano diário em `ROAD
 - Testes: `<python> -m pytest -q` (na raiz; `pythonpath = src` no `pyproject.toml`).
 - Profiling sem janela: `<python> scripts/profile_frames.py [frames]` (ms por frame em cada modo + top 15 do cProfile).
 - Teste rápido sem janela (Git Bash), a partir de `src/`:
-  `SDL_VIDEODRIVER=dummy <python> -c "import pygame,theblackhole.main as m;pygame.init();s=m.SpaceSimulation3D();[ (s.update(1/60),s.draw()) for _ in range(30)];s.toggle_mode();[(s.update(1/60),s.draw()) for _ in range(30)];print('ok')"`
+  `SDL_VIDEODRIVER=dummy <python> -c "import pygame,theblackhole.main as m;pygame.init();s=m.SpaceSimulation3D();[s.draw() for _ in range(3)];[(s.start_scene(n),[(s.update(1/60),s.draw()) for _ in range(30)]) for n in ('solar','blackhole','galaxy')];s.start_scene('solar');s.toggle_mode();[(s.update(1/60),s.draw()) for _ in range(30)];print('ok')"`
 
 ## Fluxo de cada dia
 1. Ler o próximo dia em `ROADMAP.md`; propor o plano em poucas linhas; esperar OK.
