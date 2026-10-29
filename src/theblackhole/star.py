@@ -101,7 +101,7 @@ class Star3D:
         if projection is None:
             return
 
-        screen_x, screen_y, depth, scale = projection
+        screen_x, screen_y, _depth, scale = projection
 
         # Skip if off screen
         if screen_x < -50 or screen_x > SCREEN_WIDTH + 50 or screen_y < -50 or screen_y > SCREEN_HEIGHT + 50:

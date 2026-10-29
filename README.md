@@ -1,4 +1,5 @@
 # TheBlackHole - 3D Space Simulation
+[![CI](https://github.com/francmarra/TheBlackHole/actions/workflows/ci.yml/badge.svg)](https://github.com/francmarra/TheBlackHole/actions/workflows/ci.yml)
 
 A 3D space simulation with a custom renderer written in Python. Walk on a planet in third person, watch the Sun set behind the horizon, or fly freely through a 3D star field.
 

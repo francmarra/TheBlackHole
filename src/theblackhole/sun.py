@@ -43,7 +43,7 @@ class Sun3D(Star3D):
         if projection is None:
             return
 
-        screen_x, screen_y, depth, scale = projection
+        screen_x, screen_y, _depth, scale = projection
 
         # Skip if off screen
         if screen_x < -100 or screen_x > SCREEN_WIDTH + 100 or screen_y < -100 or screen_y > SCREEN_HEIGHT + 100:
