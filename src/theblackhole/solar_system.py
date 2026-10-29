@@ -1,21 +1,30 @@
 """Planets orbiting the Sun under real (N-body) gravity."""
 
 import math
+from collections import deque
 
 import numpy as np
 import pygame
 
-from .config import AMBIENT_LIGHT, ORBITING_PLANETS, PHYSICS_MAX_STEP, SUN_GRAVITY_MASS
+from .config import (
+    AMBIENT_LIGHT,
+    ORBITING_PLANETS,
+    PHYSICS_MAX_STEP,
+    SUN_GRAVITY_MASS,
+    TRAIL_INTERVAL,
+    TRAIL_LENGTH,
+)
 from .physics import Body, GravitySystem
 
 
 class OrbitingPlanet(Body):
-    """A body that is drawn as a lit sphere."""
+    """A body that is drawn as a lit sphere, leaving a trail behind it."""
 
     def __init__(self, position, velocity, mass, radius, color):
         super().__init__(position, velocity, mass)
         self.radius = radius
         self.color = color
+        self.trail = deque(maxlen=TRAIL_LENGTH)
 
 
 def circular_orbit(center_mass, orbit_radius, angle, g=1.0):
@@ -35,11 +44,31 @@ class SolarSystem:
             position, velocity = circular_orbit(sun_mass, orbit_radius, angle)
             self.planets.append(OrbitingPlanet(self.sun.position + position, velocity, 1.0, radius, color))
         self.gravity = GravitySystem([self.sun, *self.planets])
+        self._since_trail_point = TRAIL_INTERVAL
 
     def update(self, dt):
         substeps = max(1, math.ceil(dt / PHYSICS_MAX_STEP))
         for _ in range(substeps):
             self.gravity.step(dt / substeps)
+
+        self._since_trail_point += dt
+        if self._since_trail_point >= TRAIL_INTERVAL:
+            self._since_trail_point = 0.0
+            for planet in self.planets:
+                planet.trail.append(planet.position.copy())
+
+    @staticmethod
+    def draw_trail(screen, camera, planet):
+        """Line through the planet's past positions, fading out towards the oldest point."""
+        points = [camera.project(*p) for p in planet.trail]
+        count = len(points)
+        for i in range(1, count):
+            a, b = points[i - 1], points[i]
+            if a is None or b is None:
+                continue
+            fade = 0.15 + 0.6 * i / count
+            color = tuple(int(c * fade) for c in planet.color)
+            pygame.draw.line(screen, color, a[:2], b[:2], 1)
 
     def draw(self, screen, camera, min_distance=0.0, max_distance=math.inf):
         """Draw the planets whose distance to the camera is within [min_distance, max_distance), far to near."""
@@ -51,6 +80,7 @@ class SolarSystem:
         visible.sort(key=lambda item: item[0], reverse=True)
 
         for distance, planet in visible:
+            self.draw_trail(screen, camera, planet)
             projection = camera.project(*planet.position)
             if projection is None:
                 continue

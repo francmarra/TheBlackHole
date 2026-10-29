@@ -22,3 +22,13 @@ def test_planets_keep_their_orbit_radius():
         assert np.linalg.norm(planet.position - system.sun.position) == pytest.approx(orbit_radius, rel=0.01)
     # The planets actually moved along their orbits
     assert not np.allclose(system.planets[0].position, circular_orbit(6e5, 220.0, 0.0)[0])
+
+
+def test_trails_record_recent_positions_and_stay_bounded():
+    system = SolarSystem(planets=[(220.0, 8.0, (1, 1, 1))])
+    planet = system.planets[0]
+    for _ in range(60 * 60):  # one minute at 60 FPS
+        system.update(1 / 60)
+    assert len(planet.trail) == planet.trail.maxlen
+    # The newest point is where the planet was at most one trail interval ago
+    assert np.linalg.norm(planet.trail[-1] - planet.position) < np.linalg.norm(planet.velocity) * 0.2

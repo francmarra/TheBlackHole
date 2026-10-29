@@ -81,6 +81,8 @@ MAX_FRAME_TIME = 0.05        # seconds; clamps dt after stalls
 GRAVITY_CONSTANT = 1.0
 GRAVITY_SOFTENING = 1.0  # Keeps the force finite when two bodies get very close
 PHYSICS_MAX_STEP = 1 / 120  # seconds; frames longer than this are split into substeps
+TRAIL_LENGTH = 240        # points kept per orbit trail
+TRAIL_INTERVAL = 0.1      # seconds between trail points
 
 # Solar system (orbits in the XZ plane around the Sun at the origin)
 SUN_GRAVITY_MASS = 6.0e5
