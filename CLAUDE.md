@@ -29,6 +29,7 @@ Simulação 3D com renderer próprio (pygame-ce + NumPy). Plano diário em `ROAD
 - Testes: `<python> -m pytest -q` (na raiz; `pythonpath = src` no `pyproject.toml`).
 - Hints e docstrings são obrigatórios em `src/` (ruff `ANN`, `D10x`); `mypy src/theblackhole --ignore-missing-imports` ainda dá ~20 avisos de dtypes do NumPy e opcionais guardados pelo estado (não está na CI).
 - Profiling sem janela: `<python> scripts/profile_frames.py [frames]` (ms por frame em cada modo + top 15 do cProfile).
+- Executável: `<python> scripts/build_exe.py` → `dist/TheBlackHole.exe` (~30 MB, `--onefile --windowed`). Para testar o build congelado sem janela, compilar um script de teste com `--console` e correr com `SDL_VIDEODRIVER=dummy`.
 - Teste rápido sem janela (Git Bash), a partir de `src/`:
   `SDL_VIDEODRIVER=dummy <python> -c "import pygame,theblackhole.main as m;pygame.init();s=m.SpaceSimulation3D();[s.draw() for _ in range(3)];[(s.start_scene(n),[(s.update(1/60),s.draw()) for _ in range(30)]) for n in ('solar','blackhole','galaxy')];s.start_scene('solar');s.toggle_mode();[(s.update(1/60),s.draw()) for _ in range(30)];print('ok')"`
 

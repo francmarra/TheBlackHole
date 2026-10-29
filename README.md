@@ -81,6 +81,13 @@ python -m theblackhole
 
 The original 2D version is still in `space_simulation.py`.
 
+### Standalone executable
+
+```bash
+pip install -e ".[build]"
+python scripts/build_exe.py   # -> dist/TheBlackHole.exe (single file, ~30 MB, no Python needed to run it)
+```
+
 ## Development
 
 ```bash
@@ -110,7 +117,7 @@ GitHub Actions runs `ruff` and `pytest` on every push and pull request.
   - `star.py`, `sun.py`, `starfield.py` - stars, the Sun and the star field
   - `planet.py`, `player.py` - the planet mesh and the astronaut
 - `tests/` - pytest suite
-- `scripts/` - profiling and screenshot tools
+- `scripts/` - profiling, screenshot and executable build tools
 - `ROADMAP.md` - the 28-day plan and progress log
 
 ## Units
