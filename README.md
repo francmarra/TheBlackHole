@@ -1,106 +1,113 @@
 # TheBlackHole - 3D Space Simulation
+
 [![CI](https://github.com/francmarra/TheBlackHole/actions/workflows/ci.yml/badge.svg)](https://github.com/francmarra/TheBlackHole/actions/workflows/ci.yml)
 
-A 3D space simulation with a custom renderer written in Python. Walk on a planet in third person, watch the Sun set behind the horizon, or fly freely through a 3D star field.
+A 3D space simulation with a custom renderer and real N-body physics, written in Python with Pygame and NumPy (no OpenGL). Walk on a planet while the planets orbit the Sun, fly around a black hole with an accretion disk and gravitational lensing, or watch the arms of a spiral galaxy wind up.
+
+![Flying around the black hole](docs/images/black_hole.gif)
+
+## Scenarios
+
+| Solar System | Black Hole | Galaxy |
+|---|---|---|
+| ![Planets orbiting the Sun](docs/images/solar_system.png) | ![Black hole with accretion disk](docs/images/black_hole.png) | ![Spiral galaxy](docs/images/galaxy.png) |
+| Walk on a planet in third person while four planets orbit the Sun, leaving trails | An accretion disk spiralling into the event horizon, with lensed background stars | 3000 stars on a flat rotation curve: the spiral arms wind up as the galaxy turns |
+
+![Walking on the planet](docs/images/planet.png)
 
 ## Features
 
-- **Walk on a Planet**: Explore a spherical planet in third person as a little astronaut
-- **Third-Person Camera**: The camera follows the player, with mouse/arrow control and zoom
-- **Real Curvature**: Walk all the way around the planet; the horizon curves away from you
-- **Day and Night**: The Sun lights the planet, and the night side falls into the planet's shadow
-- **Oceans, Continents and Ice Caps**: Procedurally colored planet surface
-- **Free Camera Mode**: Leave the planet and fly freely through 3D space
-- **The Sun and 800 Stars**: A realistic 3D star field with twinkling stars of different sizes and colors
-- **Custom 3D Renderer**: Perspective projection, back-face culling, near-plane clipping and flat shading, written from scratch with Pygame and NumPy
+### Physics
+- **N-body gravity** with a **Velocity Verlet** integrator (symplectic, so the energy does not drift: 2.5e-5 error over ten eccentric orbits, against 28 % with explicit Euler; see `tests/test_physics.py`)
+- **Vectorised with NumPy**: all pairwise forces are computed at once (about 60x faster than the Python loop at 100 bodies)
+- **Planets in orbit** around the Sun, with **orbit trails**
+- **Time control**: pause, speed up and slow down the simulation (x1/8 to x64)
+
+### Black hole
+- **Event horizon** from the Schwarzschild radius r_s = 2GM/c², and the dark **shadow** (~2.6 r_s) with a photon ring
+- **Accretion disk** of 1500 particles that slowly lose speed and spiral in; anything that crosses the horizon is **captured**
+- **Gravitational lensing** of the background stars (point lens: every star behind the hole splits into two images around the Einstein ring)
+- **HUD** with the distance in r_s, the escape speed and the gravitational **time dilation** sqrt(1 - r_s/r)
+- Throw rocks at it with **F**
+
+### Galaxy
+- Two **logarithmic spiral arms** of young blue stars around a yellow bulge and a central black hole
+- A **flat rotation curve** (like the one dark matter gives real galaxies): inner stars go round faster, so the arms wind up
+
+### Renderer (written from scratch)
+- Perspective camera stored as right/up/forward vectors (third person and free-fly)
+- Cube-sphere planet mesh, back-face culling, painter's algorithm and flat shading with day and night
+- **Near-plane clipping** in 3D, then **screen clipping** (Sutherland-Hodgman) in 2D: faces cut by the near plane can project tens of thousands of pixels away, and trimming them halved the frame time
+- Additive **glow** sprites for the Sun, the accretion disk and the photon ring
 
 ## Controls
 
-### On the Planet (third person)
-- **WASD**: Walk forward/backward and strafe left/right
-- **SHIFT**: Run
-- **SPACE**: Jump
-- **Mouse** (press **C** to capture it) or **Arrow Keys**: Turn the player and tilt the camera
-- **Mouse Wheel**: Zoom the camera in and out
+Start the program and pick a scenario in the menu (**Up/Down + Enter** or **1-3**). **ESC** goes back to the menu, and **ESC** in the menu quits.
 
-### Free Camera
-- **WASD**: Move forward/backward/left/right
-- **Q/E**: Move up and down
-- **SHIFT**: Fast movement (5x speed)
-- **Mouse** (press **C**) or **Arrow Keys**: Look around
+### Solar System: on the planet
+- **WASD**: walk and strafe, **SHIFT**: run, **SPACE**: jump
+- **Mouse** (press **C** to capture it) or **Arrow Keys**: turn and tilt the camera, **Mouse Wheel**: zoom
+- **TAB**: switch to the free camera and back
 
-### Other
-- **TAB**: Switch between the planet and the free camera
-- **N**: Generate a new random star field
-- **ESC**: Exit the simulation
+### Free camera (all scenarios)
+- **WASD**: move, **Q/E**: up and down, **SHIFT**: 5x faster
+- **Mouse** (press **C**) or **Arrow Keys**: look around
 
-## Installation
+### Everywhere
+- **P**: pause, **+/-**: faster or slower time
+- **F** (black hole): throw a rock
+- **N** (Solar System): new random star field
 
-1. Install Python 3.10 or higher
-2. Install the package and its dependencies (from the project folder):
-   ```bash
-   pip install -e .
-   ```
+## Installation and running
 
-## Running the Simulation
+Python 3.10 or newer:
 
-### 3D Version (Recommended)
 ```bash
+pip install -e .
 theblackhole
 ```
-or, without installing (after `pip install -r requirements.txt`):
+
+or, without installing:
+
 ```bash
+pip install -r requirements.txt
 cd src
 python -m theblackhole
 ```
 
-### 2D Version (Original)
+The original 2D version is still in `space_simulation.py`.
+
+## Development
+
 ```bash
-python space_simulation.py
+pip install -e ".[dev]"
+pytest -q          # 47 tests: camera, physics, energy, orbits, black hole, lensing, galaxy, clipping
+ruff check .
+python scripts/profile_frames.py   # ms per frame and a cProfile report, without a window
+python scripts/capture.py          # regenerates the images in docs/images
 ```
 
-## Tips
+GitHub Actions runs `ruff` and `pytest` on every push and pull request.
 
-1. **Press C** to control the camera with the mouse
-2. **Walk in a straight line** and you will come back to where you started
-3. **Walk to the night side** and watch the Sun set behind the horizon
-4. **Press TAB** to fly away and see the whole planet from space
+## Project structure
 
-## What's Next
+- `src/theblackhole/`
+  - `main.py` - start menu, scenarios, input, cameras and HUD
+  - `config.py` - every tuning constant
+  - `camera.py` - camera and projection
+  - `render.py` - near-plane and screen clipping, painter's algorithm, shading
+  - `physics.py` - `Body` and the vectorised `GravitySystem` (Velocity Verlet, energy, momentum)
+  - `solar_system.py` - planets orbiting the Sun, with trails
+  - `blackhole.py` - black hole, accretion disk, lensing, captures and HUD numbers
+  - `galaxy.py` - spiral galaxy on a flat rotation curve
+  - `glow.py` - additive glow sprites
+  - `timecontrol.py` - pause and simulation speed
+  - `star.py`, `sun.py`, `starfield.py` - stars, the Sun and the star field
+  - `planet.py`, `player.py` - the planet mesh and the astronaut
+- `tests/` - pytest suite
+- `scripts/` - profiling and screenshot tools
+- `ROADMAP.md` - the 28-day plan and progress log
 
-The project is being developed step by step. See [ROADMAP.md](ROADMAP.md) for the full plan, which includes:
+## Units
 
-- **Real Gravity**: Orbital mechanics with a Velocity Verlet integrator
-- **Orbits**: The planet orbiting the Sun, with orbit trails
-- **Black Holes**: Event horizon, accretion disk and gravitational lensing
-- **Tests & CI**: Automated tests with pytest and GitHub Actions
-
-## Technical Details
-
-The 3D renderer is written from scratch (no OpenGL):
-- **Camera**: Free orientation stored as right/up/forward vectors, used both for the third-person and the free-fly camera
-- **Perspective Projection**: Converts 3D coordinates to 2D screen coordinates
-- **Cube-Sphere Planet Mesh**: A subdivided cube projected onto a sphere, so all faces have about the same size (no crowded poles)
-- **Back-Face Culling and Painter's Algorithm**: Only faces turned towards the camera are drawn, from far to near
-- **Near-Plane Clipping**: Faces that cross behind the camera are cut instead of disappearing
-- **Flat Shading**: Each face is lit by the Sun according to its normal, with ambient light on the night side
-- **Walking on a Sphere**: Moving is a rotation around the planet's center, and the heading is carried along the surface (parallel transport)
-- **NumPy Vectorization**: Visibility, lighting and projection of the planet mesh are computed for all faces at once
-
-## File Structure
-
-- `src/theblackhole/` - The 3D simulation package
-  - `main.py` - Main loop: planet explorer and free camera
-  - `config.py` - Constants (screen, camera, planet, player)
-  - `camera.py` - 3D camera and projection
-  - `render.py` - Near-plane clipping, painter's algorithm and shading
-  - `star.py`, `sun.py`, `starfield.py` - Stars, the Sun and the star field
-  - `planet.py` - Cube-sphere planet mesh
-  - `player.py` - The astronaut
-- `space_simulation.py` - Original 2D simulation with camera controls
-- `pyproject.toml` - Package metadata and the `theblackhole` command
-- `requirements.txt` - Python dependencies
-- `ROADMAP.md` - Development plan and progress log
-- `README.md` - This file
-
-Enjoy exploring the 3D cosmos! 🌟🚀
+The simulation uses scene units, not SI: G = 1 and the speed of light is 316 units/s, chosen so that the orbits, the horizon and the lensing are all visible on screen. The formulas are the real ones (`tests/test_blackhole.py` checks the Schwarzschild radius of the Sun in SI units).
