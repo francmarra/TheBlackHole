@@ -47,7 +47,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 - [x] **Dia 22** — Screenshots e GIF animado no README
 - [x] **Dia 23** — Type hints e docstrings em todo o código
 - [x] **Dia 24** — Guardar e carregar cenários em JSON
-- [ ] **Dia 25** — Badges no README (CI, Python, licença)
+- [x] **Dia 25** — Badges no README (CI, Python, licença)
 - [ ] **Dia 26** — Executável com PyInstaller
 - [ ] **Dia 27** — Release `v1.0.0` no GitHub com tag e changelog
 - [ ] **Dia 28** — Texto do projeto para o CV/LinkedIn e um post a mostrar o resultado
@@ -82,3 +82,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | 22 | 2026-10-29 | **Extra (mesmo dia):** `scripts/capture.py` gera sem janela 5 screenshots e um GIF (72 frames, a câmara à volta do buraco negro, 1,9 MB) em `docs/images/`; README reescrito com os 3 cenários, física, controlos, desenvolvimento e unidades; Pillow nas dependências de dev |
 | 23 | 2026-10-29 | **Extra (mesmo dia):** type hints em todas as funções e docstrings em todas as classes e métodos públicos de `src/` (inseridos com um script `ast` e revistos com o `mypy`: 91 → 20 avisos, os restantes são dtypes do NumPy); `aliases.py` com `Vector`, `Color`, `Point2`, `Lens`; o ruff passa a exigir `ANN` e `D10x` no pacote; `sun_position` passou para dentro do `StarField3D` |
 | 24 | 2026-10-29 | **Extra (mesmo dia):** `scenario.py` + `to_dict`/`from_dict` no Sistema Solar, buraco negro (rochas e capturas; o disco é regenerado) e galáxia; `F5` guarda e `F9` carrega `saves/<cenário>.json` com mensagem no ecrã; todos os valores lidos são validados (números finitos, massas positivas, vetores de 3) e um ficheiro mau não estraga a cena em curso; 11 testes |
+| 25 | 2026-10-29 | **Extra (mesmo dia):** badges no README (CI, Python 3.11+, licença MIT, ruff); corrigido o mínimo de Python para 3.11 (o `numpy==2.3.1` fixado não instala em 3.10) e a CI passou a testar 3.11, 3.12 e 3.13 para o badge ser verdade |
