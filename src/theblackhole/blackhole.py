@@ -69,6 +69,25 @@ def lensed_offsets(beta, einstein_radius):
     return (beta + root) / 2, (beta - root) / 2
 
 
+def hud_readout(black_hole, position, speed):
+    """Numbers shown in the HUD for an observer at `position` moving at `speed`."""
+    distance = float(np.linalg.norm(np.asarray(position, dtype=float) - black_hole.position))
+    r_s = black_hole.horizon_radius
+    escape = math.sqrt(2 * GRAVITY_CONSTANT * black_hole.mass / distance)
+    # Gravitational time dilation for a static observer: dτ/dt = sqrt(1 - r_s / r)
+    clock_rate = math.sqrt(max(0.0, 1 - r_s / distance))
+    return {
+        "mass": black_hole.mass,
+        "horizon": r_s,
+        "distance": distance,
+        "distance_rs": distance / r_s,
+        "speed": speed,
+        "speed_c": speed / SPEED_OF_LIGHT,
+        "escape_c": escape / SPEED_OF_LIGHT,
+        "clock_rate": clock_rate,
+    }
+
+
 class GravitationalLens:
     """Moves background stars on screen as the black hole's gravity bends their light."""
 

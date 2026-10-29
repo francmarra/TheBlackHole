@@ -6,7 +6,7 @@ import sys
 import numpy as np
 import pygame
 
-from .blackhole import BlackHoleScene
+from .blackhole import BlackHoleScene, hud_readout
 from .camera import Camera, normalize
 from .config import (
     BLACK,
@@ -59,6 +59,7 @@ class SpaceSimulation3D:
 
         self.camera = Camera()
         self.time = TimeControl()
+        self.camera_speed = 0.0  # units per real second, for the HUD
         self.mode = "planet"  # "planet" = third person on the planet, "free" = free-fly camera
         self.scene = "solar"  # "solar" = planet and Solar System, "blackhole" = the black hole scene
         self.black_hole_scene = None  # Built the first time it is opened
@@ -226,7 +227,10 @@ class SpaceSimulation3D:
         time = pygame.time.get_ticks() / 1000.0
         if self.scene == "blackhole":
             self.black_hole_scene.update(self.time.scaled(dt), time)
+            previous = self.camera.position.copy()
             self.update_camera()
+            if dt > 0:
+                self.camera_speed = float(np.linalg.norm(self.camera.position - previous)) / dt
             return
         self.star_field.update(time)
         self.solar_system.update(self.time.scaled(dt))
@@ -348,10 +352,16 @@ class SpaceSimulation3D:
             "ESC - Exit",
         ]
         hole = self.black_hole_scene.black_hole
+        info = hud_readout(hole, self.camera.position, self.camera_speed)
         status_info = [
             f"FPS: {self.clock.get_fps():.0f}",
             f"Time: {self.time.label()}",
-            f"Event horizon: {hole.horizon_radius:.1f} units",
+            f"Mass: {info['mass']:.2e}",
+            f"Event horizon (r_s): {info['horizon']:.1f} units",
+            f"Distance: {info['distance']:.0f} units ({info['distance_rs']:.1f} r_s)",
+            f"Camera speed: {info['speed']:.0f} units/s ({info['speed_c']:.2f} c)",
+            f"Escape speed here: {info['escape_c']:.2f} c",
+            f"Your clock runs at: {info['clock_rate'] * 100:.1f} %",
             f"Captured: {self.black_hole_scene.captured}",
         ]
         return instructions, status_info

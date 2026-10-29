@@ -78,3 +78,25 @@ def test_far_away_stars_are_barely_moved():
 
     outer, _ = lensed_offsets(beta=1000.0, einstein_radius=10.0)
     assert outer == pytest.approx(1000.0, rel=1e-3)
+
+
+def test_hud_readout_at_ten_schwarzschild_radii():
+    import math
+
+    from theblackhole.blackhole import hud_readout
+    from theblackhole.config import SPEED_OF_LIGHT
+
+    hole = BlackHole()
+    info = hud_readout(hole, (10 * hole.horizon_radius, 0, 0), speed=SPEED_OF_LIGHT / 2)
+    assert info["distance_rs"] == pytest.approx(10)
+    assert info["speed_c"] == pytest.approx(0.5)
+    # v_esc = sqrt(2GM/r) = c * sqrt(r_s / r)
+    assert info["escape_c"] == pytest.approx(math.sqrt(0.1))
+    assert info["clock_rate"] == pytest.approx(math.sqrt(0.9))
+
+
+def test_clock_stops_at_the_horizon():
+    from theblackhole.blackhole import hud_readout
+
+    hole = BlackHole()
+    assert hud_readout(hole, (hole.horizon_radius, 0, 0), speed=0)["clock_rate"] == pytest.approx(0)
