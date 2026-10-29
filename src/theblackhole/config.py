@@ -102,3 +102,9 @@ BLACK_HOLE_MASS = 2.0e6       # r_s = 2GM/c² ≈ 40 units
 BLACK_HOLE_START_CAMERA = (0.0, 250.0, -1100.0)
 SHADOW_FACTOR = 2.6           # The dark "shadow" seen from afar is ~2.6 r_s (photon capture radius)
 PHOTON_RING_COLOR = (255, 170, 80)
+DISK_PARTICLES = 1500
+DISK_INNER = 3.0              # Inner edge of the disk in r_s (the innermost stable orbit of a real black hole)
+DISK_OUTER = 10.0             # Outer edge in r_s
+DISK_THICKNESS = 0.08         # Vertical spread as a fraction of the radius
+DISK_HOT_COLOR = (255, 240, 200)   # Inner edge
+DISK_COOL_COLOR = (200, 60, 20)    # Outer edge
