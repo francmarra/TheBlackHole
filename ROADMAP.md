@@ -29,7 +29,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 - [x] **Dia 10** — Rastos das órbitas (trails)
 - [x] **Dia 11** — Controlo do tempo: pausa, acelerar e abrandar (`P`, `+`, `-`)
 - [x] **Dia 12** — Teste de conservação de energia (prova que a física está certa)
-- [ ] **Dia 13** — Vetorizar a física com NumPy (performance)
+- [x] **Dia 13** — Vetorizar a física com NumPy (performance)
 - [ ] **Dia 14** — Mostrar FPS, fazer profiling e otimizar o render
 
 ## Fase 3 — O buraco negro (dias 15–21)
@@ -70,3 +70,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | 10 | 2026-10-29 | **Extra (mesmo dia):** rastos das órbitas: cada planeta guarda 240 posições (uma a cada 0,1 s) num `deque` e desenha uma linha que se desvanece até ao ponto mais antigo; 1 teste |
 | 11 | 2026-10-29 | **Extra (mesmo dia):** controlo do tempo (`timecontrol.py`): `P` pausa as órbitas, `+`/`-` dobram ou dividem a velocidade (x1/8 a x64); o jogador continua em tempo real; HUD mostra a velocidade; 3 testes |
 | 12 | 2026-10-29 | **Extra (mesmo dia):** `GravitySystem.total_energy()` (cinética + potencial com softening); teste com órbita excêntrica (e = 0,6) durante ~10 voltas: erro máximo 2,5e-5 com Verlet contra 28 % com Euler explícito (2.º teste mostra a diferença) |
+| 13 | 2026-10-29 | **Extra (mesmo dia):** física vetorizada: estado em arrays (N, 3) com os `Body` como vistas; acelerações e energia com `einsum` em vez do ciclo par a par. 100 corpos: 30,8 → 0,52 ms por passo (~60x); 400 corpos: 7 ms. Teste novo compara com a fórmula par a par |
