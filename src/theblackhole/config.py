@@ -76,3 +76,7 @@ HUD_STATUS_COLOR = (150, 150, 150)
 
 # Main loop
 MAX_FRAME_TIME = 0.05        # seconds; clamps dt after stalls
+
+# Gravity (scene units, not SI: tuned so orbits look good on screen)
+GRAVITY_CONSTANT = 1.0
+GRAVITY_SOFTENING = 1.0  # Keeps the force finite when two bodies get very close

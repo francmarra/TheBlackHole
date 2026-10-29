@@ -11,6 +11,7 @@ Simulação 3D com renderer próprio (pygame-ce + NumPy). Plano diário em `ROAD
 | `star.py` / `sun.py` / `starfield.py` | `Star3D`, `Sun3D`, `StarField3D` |
 | `planet.py` | `Planet` (cube-sphere, LOD near/far) |
 | `player.py` | `Player` (astronauta em caixas, andar numa esfera) |
+| `physics.py` | `Body`, `GravitySystem` (gravidade N-corpos, Velocity Verlet; ainda não ligado ao `main`) |
 | `main.py` | `SpaceSimulation3D` (loop, input, câmara 3.ª pessoa/livre, HUD) + `main()` |
 
 `space_simulation.py` na raiz = versão 2D antiga (não mexer).
