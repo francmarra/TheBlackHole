@@ -44,7 +44,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 
 ## Fase 4 — Portefólio (dias 22–28)
 
-- [ ] **Dia 22** — Screenshots e GIF animado no README
+- [x] **Dia 22** — Screenshots e GIF animado no README
 - [ ] **Dia 23** — Type hints e docstrings em todo o código
 - [ ] **Dia 24** — Guardar e carregar cenários em JSON
 - [ ] **Dia 25** — Badges no README (CI, Python, licença)
@@ -79,3 +79,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | 19 | 2026-10-29 | **Extra (mesmo dia):** `glow.py`: sprites de brilho radial (queda quadrática, em cache) desenhados com `BLEND_ADD`, por isso somam onde se sobrepõem; aplicados às partículas do disco (o interior quente fica a brilhar), ao anel de fotões e ao Sol; ~15,7 ms/frame na cena do buraco negro; 2 testes |
 | 20 | 2026-10-29 | **Extra (mesmo dia):** HUD do buraco negro (`hud_readout`): massa, r_s, distância (unidades e em r_s), velocidade da câmara (e em c), velocidade de escape no local e ritmo do relógio sqrt(1 - r_s/r); corrigido bug de aliasing da `Camera` (guardava o array da câmara livre sem copiar); 3 testes |
 | 21 | 2026-10-29 | **Extra (mesmo dia):** menu inicial (setas + Enter ou 1-3; ESC numa cena volta ao menu, ESC no menu sai); cenário novo `galaxy.py`: 3000 estrelas em 2 braços em espiral logarítmica com curva de rotação plana (halo de matéria escura), por isso os braços enrolam-se com o tempo, bojo com brilho e buraco negro central; a tecla `B` saiu (o menu substitui-a); 3 testes |
+| 22 | 2026-10-29 | **Extra (mesmo dia):** `scripts/capture.py` gera sem janela 5 screenshots e um GIF (72 frames, a câmara à volta do buraco negro, 1,9 MB) em `docs/images/`; README reescrito com os 3 cenários, física, controlos, desenvolvimento e unidades; Pillow nas dependências de dev |
