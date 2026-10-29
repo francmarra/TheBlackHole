@@ -25,7 +25,7 @@ class Camera:
 
     def look_at(self, position, target, up_hint):
         """Place the camera at `position`, looking at `target`, with `up_hint` as up."""
-        self.position = np.asarray(position, dtype=float)
+        self.position = np.array(position, dtype=float)  # Copy: callers keep moving their own array
         self.forward = normalize(np.asarray(target, dtype=float) - self.position)
         self.right = normalize(np.cross(up_hint, self.forward))
         self.up = np.cross(self.forward, self.right)
@@ -33,7 +33,7 @@ class Camera:
 
     def set_yaw_pitch(self, position, yaw, pitch):
         """Classic free-fly orientation, with the world Y axis as up."""
-        self.position = np.asarray(position, dtype=float)
+        self.position = np.array(position, dtype=float)  # Copy: callers keep moving their own array
         cos_pitch = math.cos(pitch)
         self.forward = np.array([math.sin(yaw) * cos_pitch, math.sin(pitch), math.cos(yaw) * cos_pitch])
         self.right = np.array([math.cos(yaw), 0.0, -math.sin(yaw)])

@@ -97,3 +97,10 @@ def test_look_at_points_at_target(camera):
     assert camera.forward == pytest.approx(expected)
     x, y, _ = camera.project(*target)
     assert (x, y) == pytest.approx(CENTER)
+
+
+def test_camera_keeps_its_own_copy_of_the_position(camera):
+    position = np.array([1.0, 2.0, 3.0])
+    camera.set_yaw_pitch(position, yaw=0, pitch=0)
+    position += 10  # e.g. the free camera moving before the next update
+    assert camera.position == pytest.approx([1, 2, 3])
