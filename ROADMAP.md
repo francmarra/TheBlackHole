@@ -19,7 +19,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 - [x] **Dia 3** — Reorganizar em pacote: `src/theblackhole/` com `star.py`, `sun.py`, `starfield.py`, `main.py`
 - [x] **Dia 4** — Extrair uma classe `Camera` (posição, pitch, yaw, `project()`) e remover a lógica repetida nas estrelas *(feito no dia 2, junto com o planeta)*
 - [x] **Dia 5** — Criar `config.py` com todas as constantes (ecrã, cores, velocidades)
-- [ ] **Dia 6** — Primeiros testes com `pytest` (projeção 3D→2D, rotação da câmara)
+- [x] **Dia 6** — Primeiros testes com `pytest` (projeção 3D→2D, rotação da câmara)
 - [ ] **Dia 7** — GitHub Actions: CI com `ruff` + `pytest` a cada push
 
 ## Fase 2 — Física a sério (dias 8–14)
@@ -63,3 +63,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | 2 | 2026-10-12 | `.gitignore` e `LICENSE` (MIT); `requirements.txt` passou para `pygame-ce==2.5.8` (o fork que já estava em uso) e `numpy==2.3.1` |
 | 3 | 2026-10-14 | Código dividido no pacote `src/theblackhole/` (config, camera, render, star, sun, starfield, planet, player, main); `pyproject.toml` com o comando `theblackhole`; README atualizado |
 | 5 | 2026-10-15 | Valores de afinação (estrelas, câmaras, LOD e cores do planeta, fato, HUD, dt máximo) passados para `config.py` |
+| 6 | 2026-10-29 | `pytest` com 13 testes da `Camera` em `tests/test_camera.py` (centro do ecrã, eixos, distância, plano near, single vs batch, yaw/pitch, `look_at`, base ortonormal); config em `pyproject.toml` |
