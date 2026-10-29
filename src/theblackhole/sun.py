@@ -5,6 +5,7 @@ import math
 import pygame
 
 from .config import SCREEN_HEIGHT, SCREEN_WIDTH, SUN_COLOR
+from .glow import draw_glow
 from .star import Star3D
 
 
@@ -59,8 +60,9 @@ class Sun3D(Star3D):
         # Calculate Sun size (always significant)
         sun_size = max(5, int(self.size * scale * 4))
 
-        # Draw corona (outermost layer)
+        # Draw corona (outermost layer), on top of a wide soft glow
         corona_radius = sun_size + int(self.corona_size * scale)
+        draw_glow(screen, (screen_x, screen_y), corona_radius * 4, bright_color, 0.5)
         corona_color = tuple(max(0, min(255, int(c * 0.1))) for c in bright_color)
         if corona_radius > 0:
             pygame.draw.circle(screen, corona_color, (int(screen_x), int(screen_y)), corona_radius)

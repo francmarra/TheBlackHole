@@ -24,6 +24,7 @@ from .config import (
     SHADOW_FACTOR,
     SPEED_OF_LIGHT,
 )
+from .glow import draw_glow
 from .physics import Body, GravitySystem
 from .starfield import StarField3D
 
@@ -52,6 +53,7 @@ class BlackHole(Body):
         x, y, depth = projection
         radius_px = max(2, int(self.shadow_radius * camera.focal_length / depth))
         center = (int(x), int(y))
+        draw_glow(screen, center, radius_px * 1.8, PHOTON_RING_COLOR, 0.35)
         # Thin bright ring where light orbits just outside the shadow, then pure black inside
         pygame.draw.circle(screen, PHOTON_RING_COLOR, center, radius_px + max(1, radius_px // 25))
         pygame.draw.circle(screen, (0, 0, 0), center, radius_px)
@@ -156,7 +158,8 @@ class AccretionDisk:
         sizes = np.clip(6.0 * camera.focal_length / cam[keep, 2], 1, 4).astype(int).tolist()
         colors = self.colors[keep].astype(int).tolist()
         for point, size, color in zip(screen_points, sizes, colors):
-            pygame.draw.circle(screen, color, point, size)
+            draw_glow(screen, point, size * 3, color, 0.4)
+            pygame.draw.circle(screen, color, point, max(1, size - 1))
 
 
 class Rock(Body):
