@@ -6,9 +6,11 @@ import sys
 import numpy as np
 import pygame
 
+from .blackhole import BlackHoleScene
 from .camera import Camera, normalize
 from .config import (
     BLACK,
+    BLACK_HOLE_START_CAMERA,
     CAMERA_DISTANCE,
     CAMERA_ELEVATION,
     CAMERA_ELEVATION_MAX,
@@ -58,6 +60,8 @@ class SpaceSimulation3D:
         self.camera = Camera()
         self.time = TimeControl()
         self.mode = "planet"  # "planet" = third person on the planet, "free" = free-fly camera
+        self.scene = "solar"  # "solar" = planet and Solar System, "blackhole" = the black hole scene
+        self.black_hole_scene = None  # Built the first time it is opened
 
         # Third-person camera
         self.camera_distance = CAMERA_DISTANCE
@@ -106,6 +110,24 @@ class SpaceSimulation3D:
         else:
             self.mode = "planet"
 
+    def look_from(self, position, target):
+        """Put the free camera at `position`, looking at `target`."""
+        self.free_position = np.asarray(position, dtype=float).copy()
+        direction = normalize(np.asarray(target, dtype=float) - self.free_position)
+        self.free_yaw = math.atan2(direction[0], direction[2])
+        self.free_pitch = math.asin(max(-1.0, min(1.0, direction[1])))
+
+    def toggle_scene(self):
+        if self.scene == "solar":
+            self.scene = "blackhole"
+            if self.black_hole_scene is None:
+                self.black_hole_scene = BlackHoleScene()
+            self.mode = "free"
+            self.look_from(BLACK_HOLE_START_CAMERA, self.black_hole_scene.black_hole.position)
+        else:
+            self.scene = "solar"
+            self.mode = "planet"
+
     def handle_events(self, dt):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -121,8 +143,10 @@ class SpaceSimulation3D:
                     self.time.faster()
                 elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
                     self.time.slower()
-                elif event.key == pygame.K_TAB:
+                elif event.key == pygame.K_TAB and self.scene == "solar":
                     self.toggle_mode()
+                elif event.key == pygame.K_b:
+                    self.toggle_scene()
                 elif event.key == pygame.K_SPACE and self.mode == "planet":
                     self.player.jump()
                 elif event.key == pygame.K_c:
@@ -197,6 +221,10 @@ class SpaceSimulation3D:
 
     def update(self, dt):
         time = pygame.time.get_ticks() / 1000.0
+        if self.scene == "blackhole":
+            self.black_hole_scene.update(self.time.scaled(dt), time)
+            self.update_camera()
+            return
         self.star_field.update(time)
         self.solar_system.update(self.time.scaled(dt))
         self.player.update(dt)
@@ -207,6 +235,11 @@ class SpaceSimulation3D:
 
     def draw(self):
         self.screen.fill(BLACK)
+        if self.scene == "blackhole":
+            self.black_hole_scene.draw(self.screen, self.camera)
+            self.draw_ui()
+            pygame.display.flip()
+            return
 
         # Stars behind the planet first, then the planet hides them, then the ones in front
         planet_distance = float(np.linalg.norm(self.camera.position - self.planet.center))
@@ -228,7 +261,9 @@ class SpaceSimulation3D:
             self.screen.blit(self.font.render(line, True, line_color), (x, 10 + i * 22))
 
     def draw_ui(self):
-        if self.mode == "planet":
+        if self.scene == "blackhole":
+            instructions, status_info = self.black_hole_hud()
+        elif self.mode == "planet":
             instructions = [
                 "TheBlackHole - Planet Explorer",
                 "WASD - Walk / strafe",
@@ -237,6 +272,7 @@ class SpaceSimulation3D:
                 "Mouse (press C) / Arrows - Turn and tilt camera",
                 "Mouse wheel - Zoom",
                 "TAB - Free camera",
+                "B - Black hole",
                 "P - Pause orbits, +/- - Time speed",
                 "N - New stars",
                 "ESC - Exit",
@@ -264,6 +300,7 @@ class SpaceSimulation3D:
                 "SHIFT - Fast movement",
                 "Mouse (press C) / Arrows - Look around",
                 "TAB - Back to the planet",
+                "B - Black hole",
                 "P - Pause orbits, +/- - Time speed",
                 "N - New stars",
                 "ESC - Exit",
@@ -294,6 +331,25 @@ class SpaceSimulation3D:
                            (center_x - 10, center_y), (center_x + 10, center_y), 2)
             pygame.draw.line(self.screen, (100, 100, 100),
                            (center_x, center_y - 10), (center_x, center_y + 10), 2)
+
+    def black_hole_hud(self):
+        instructions = [
+            "TheBlackHole - Black Hole",
+            "WASD - Move forward/back/left/right",
+            "QE - Move up/down",
+            "SHIFT - Fast movement",
+            "Mouse (press C) / Arrows - Look around",
+            "P - Pause, +/- - Time speed",
+            "B - Back to the Solar System",
+            "ESC - Exit",
+        ]
+        hole = self.black_hole_scene.black_hole
+        status_info = [
+            f"FPS: {self.clock.get_fps():.0f}",
+            f"Time: {self.time.label()}",
+            f"Event horizon: {hole.horizon_radius:.1f} units",
+        ]
+        return instructions, status_info
 
     def run(self):
         while self.running:

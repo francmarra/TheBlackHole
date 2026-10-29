@@ -9,10 +9,11 @@ from .sun import Sun3D
 
 
 class StarField3D:
-    def __init__(self, num_stars=NUM_STARS, clear_zones=()):
+    def __init__(self, num_stars=NUM_STARS, clear_zones=(), with_sun=True):
         self.stars = []
         self.sun = None
         self.clear_zones = clear_zones  # (center, radius) regions kept free of stars
+        self.with_sun = with_sun
         self.generate_stars(num_stars)
 
     def generate_stars(self, num_stars):
@@ -21,8 +22,9 @@ class StarField3D:
         self.stars = []
 
         # Add the Sun at the center
-        self.sun = Sun3D(0, 0, 0)
-        self.stars.append(self.sun)
+        if self.with_sun:
+            self.sun = Sun3D(0, 0, 0)
+            self.stars.append(self.sun)
 
         # Generate other stars around the Sun
         while len(self.stars) < num_stars:

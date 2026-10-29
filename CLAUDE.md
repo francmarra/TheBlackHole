@@ -14,6 +14,7 @@ Simulação 3D com renderer próprio (pygame-ce + NumPy). Plano diário em `ROAD
 | `physics.py` | `Body`, `GravitySystem` (gravidade N-corpos vetorizada em NumPy, Velocity Verlet, energia e momento) |
 | `solar_system.py` | `SolarSystem`, `OrbitingPlanet` (planetas em órbita do Sol, rastos) |
 | `timecontrol.py` | `TimeControl` (pausa e velocidade da simulação) |
+| `blackhole.py` | `schwarzschild_radius`, `BlackHole` (horizonte, sombra), `BlackHoleScene` (cena da tecla B) |
 | `main.py` | `SpaceSimulation3D` (loop, input, câmara 3.ª pessoa/livre, HUD) + `main()` |
 
 `space_simulation.py` na raiz = versão 2D antiga (não mexer).

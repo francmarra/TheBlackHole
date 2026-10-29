@@ -95,3 +95,10 @@ ORBITING_PLANETS = [
     (560.0, 18.0, (190, 90, 60)),
     (1500.0, 45.0, (200, 170, 130)),
 ]
+
+# Black hole scene (scene units: c is tuned so the horizon is visible on screen)
+SPEED_OF_LIGHT = 316.0
+BLACK_HOLE_MASS = 2.0e6       # r_s = 2GM/c² ≈ 40 units
+BLACK_HOLE_START_CAMERA = (0.0, 250.0, -1100.0)
+SHADOW_FACTOR = 2.6           # The dark "shadow" seen from afar is ~2.6 r_s (photon capture radius)
+PHOTON_RING_COLOR = (255, 170, 80)
