@@ -1,15 +1,33 @@
 """A twinkling star in 3D space."""
 
+from __future__ import annotations
+
 import math
 import random
+from typing import TYPE_CHECKING
 
 import pygame
 
+from .aliases import Color, Lens
 from .config import SCREEN_HEIGHT, SCREEN_WIDTH, STAR_COLORS
+
+if TYPE_CHECKING:
+    from .camera import Camera
 
 
 class Star3D:
-    def __init__(self, x, y, z, size=None, color=None, brightness=None, mass=None):
+    """A star at a fixed point in space."""
+
+    def __init__(
+        self,
+        x: float,
+        y: float,
+        z: float,
+        size: float | None = None,
+        color: Color | None = None,
+        brightness: float | None = None,
+        mass: float | None = None,
+    ) -> None:
         self.x = x
         self.y = y
         self.z = z
@@ -40,7 +58,7 @@ class Star3D:
         self.acceleration_y = 0.0
         self.acceleration_z = 0.0
 
-    def calculate_gravitational_force(self, other_star):
+    def calculate_gravitational_force(self, other_star: Star3D) -> tuple[float, float, float]:
         """Calculate gravitational force between this star and another star"""
         # Calculate distance between stars
         dx = other_star.x - self.x
@@ -62,7 +80,7 @@ class Star3D:
 
         return force_x, force_y, force_z
 
-    def get_mass_category(self):
+    def get_mass_category(self) -> str:
         """Return the mass category of this star for display purposes"""
         if self.mass < 500:
             return "Dwarf"
@@ -75,12 +93,14 @@ class Star3D:
         else:
             return "Giant"
 
-    def update(self, time):
+    def update(self, time: float) -> None:
         # Create twinkling effect with brighter range
+        """Update the twinkling brightness for the current `time`."""
         twinkle = math.sin(time * self.twinkle_speed + self.twinkle_offset) * 0.4  # Increased from 0.3
         self.current_brightness = max(0.3, self.brightness + twinkle)  # Increased minimum from 0.1
 
-    def project_to_2d(self, camera):
+    def project_to_2d(self, camera: Camera) -> tuple[float, float, float, float] | None:
+        """Screen position, depth and a distance-based size scale, or None if behind."""
         projection = camera.project(self.x, self.y, self.z)
         if projection is None:
             return None
@@ -95,7 +115,7 @@ class Star3D:
 
         return screen_x, screen_y, depth, scale
 
-    def draw(self, screen, camera, lens=None):
+    def draw(self, screen: pygame.Surface, camera: Camera, lens: Lens | None = None) -> None:
         """Draw the star; `lens(x, y, distance)` can move it to one or more lensed images."""
         projection = self.project_to_2d(camera)
 
@@ -110,7 +130,7 @@ class Star3D:
         for image_x, image_y in lens(screen_x, screen_y, distance):
             self._draw_at(screen, image_x, image_y, scale)
 
-    def _draw_at(self, screen, screen_x, screen_y, scale):
+    def _draw_at(self, screen: pygame.Surface, screen_x: float, screen_y: float, scale: float) -> None:
         # Skip if off screen
         if screen_x < -50 or screen_x > SCREEN_WIDTH + 50 or screen_y < -50 or screen_y > SCREEN_HEIGHT + 50:
             return

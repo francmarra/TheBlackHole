@@ -1,13 +1,17 @@
 """Soft glow sprites drawn with additive blending (bright where they overlap)."""
 
+from __future__ import annotations
+
 from functools import lru_cache
 
 import numpy as np
 import pygame
 
+from .aliases import Color, Point2
+
 
 @lru_cache(maxsize=512)
-def glow_sprite(radius, color):
+def glow_sprite(radius: int, color: Color) -> pygame.Surface:
     """A (2r+1)² surface with `color` fading out from the center (quadratic falloff)."""
     size = 2 * radius + 1
     y, x = np.mgrid[-radius : radius + 1, -radius : radius + 1]
@@ -18,7 +22,7 @@ def glow_sprite(radius, color):
     return surface
 
 
-def draw_glow(screen, center, radius, color, intensity=1.0):
+def draw_glow(screen: pygame.Surface, center: Point2, radius: float, color: Color, intensity: float = 1.0) -> None:
     """Add a glow of `radius` pixels around `center`; colours are quantised so sprites can be reused."""
     radius = int(radius)
     if radius < 1:

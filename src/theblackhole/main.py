@@ -1,11 +1,14 @@
 """Main loop: start menu, the planet explorer, the black hole and the galaxy."""
 
+from __future__ import annotations
+
 import math
 import sys
 
 import numpy as np
 import pygame
 
+from .aliases import ArrayLike, Color, Vector
 from .blackhole import BlackHoleScene, hud_readout
 from .camera import Camera, normalize
 from .config import (
@@ -57,7 +60,9 @@ SCENARIOS = [
 
 
 class SpaceSimulation3D:
-    def __init__(self):
+    """The window, the start menu and the three scenarios."""
+
+    def __init__(self) -> None:
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         pygame.display.set_caption("TheBlackHole - Planet Explorer")
         self.clock = pygame.time.Clock()
@@ -77,8 +82,8 @@ class SpaceSimulation3D:
         self.mode = "planet"  # "planet" = third person on the planet, "free" = free-fly camera
         self.scene = "menu"  # "menu", or one of the SCENARIOS
         self.menu_index = 0
-        self.black_hole_scene = None  # Built the first time they are opened
-        self.galaxy_scene = None
+        self.black_hole_scene: BlackHoleScene | None = None  # Built the first time they are opened
+        self.galaxy_scene: GalaxyScene | None = None
 
         # Third-person camera
         self.camera_distance = CAMERA_DISTANCE
@@ -97,7 +102,7 @@ class SpaceSimulation3D:
 
         self.update_camera()
 
-    def create_player(self):
+    def create_player(self) -> Player:
         """Start on land, on the day side, with the Sun behind the camera so the player is lit."""
         to_sun = normalize(self.star_field.sun_position - self.planet.center)
         tilt = math.radians(50)  # Angle between the start point and the point right under the Sun
@@ -110,13 +115,13 @@ class SpaceSimulation3D:
         heading = -sun_ahead * 0.6 + np.cross(normal, sun_ahead) * 0.8
         return Player(self.planet, normal, heading)
 
-    def new_star_field(self):
+    def new_star_field(self) -> None:
+        """Generate a new random star field and Solar System."""
         self.star_field = StarField3D(NUM_STARS, clear_zones=[(tuple(self.planet.center), PLANET_STAR_CLEAR_RADIUS)])
-        sun = self.star_field.sun
-        self.star_field.sun_position = np.array([sun.x, sun.y, sun.z], dtype=float)
         self.solar_system = SolarSystem(self.star_field.sun_position)
 
-    def toggle_mode(self):
+    def toggle_mode(self) -> None:
+        """Switch between the third-person camera and the free camera."""
         if self.mode == "planet":
             # Start flying from where the third-person camera is
             self.mode = "free"
@@ -127,14 +132,15 @@ class SpaceSimulation3D:
         else:
             self.mode = "planet"
 
-    def look_from(self, position, target):
+    def look_from(self, position: ArrayLike, target: ArrayLike) -> None:
         """Put the free camera at `position`, looking at `target`."""
         self.free_position = np.asarray(position, dtype=float).copy()
         direction = normalize(np.asarray(target, dtype=float) - self.free_position)
         self.free_yaw = math.atan2(direction[0], direction[2])
         self.free_pitch = math.asin(max(-1.0, min(1.0, direction[1])))
 
-    def start_scene(self, scene):
+    def start_scene(self, scene: str) -> None:
+        """Open one of the SCENARIOS, building it the first time."""
         self.scene = scene
         if scene == "solar":
             self.mode = "planet"
@@ -149,11 +155,12 @@ class SpaceSimulation3D:
             self.mode = "free"
             self.look_from(GALAXY_START_CAMERA, (0.0, 0.0, 0.0))
 
-    def active_scene(self):
+    def active_scene(self) -> BlackHoleScene | GalaxyScene | None:
         """The scene object for the black hole and galaxy scenarios (None for the Solar System)."""
         return {"blackhole": self.black_hole_scene, "galaxy": self.galaxy_scene}.get(self.scene)
 
-    def handle_menu_key(self, key):
+    def handle_menu_key(self, key: int) -> None:
+        """Move the menu selection, start a scenario or quit."""
         if key == pygame.K_ESCAPE:
             self.running = False
         elif key in (pygame.K_UP, pygame.K_w):
@@ -166,7 +173,8 @@ class SpaceSimulation3D:
             self.menu_index = key - pygame.K_1
             self.start_scene(SCENARIOS[self.menu_index][0])
 
-    def handle_events(self, dt):
+    def handle_events(self, dt: float) -> None:
+        """Handle the window events and the keys held down this frame."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
@@ -199,7 +207,8 @@ class SpaceSimulation3D:
                     pygame.mouse.set_visible(not self.mouse_captured)
                     pygame.event.set_grab(self.mouse_captured)
             elif event.type == pygame.MOUSEWHEEL and self.mode == "planet":
-                self.camera_distance = max(CAMERA_ZOOM_MIN, min(CAMERA_ZOOM_MAX, self.camera_distance - event.y * CAMERA_ZOOM_STEP))
+                zoomed = self.camera_distance - event.y * CAMERA_ZOOM_STEP
+                self.camera_distance = max(CAMERA_ZOOM_MIN, min(CAMERA_ZOOM_MAX, zoomed))
             elif event.type == pygame.MOUSEMOTION and self.mouse_captured:
                 mouse_x, mouse_y = event.rel
                 if self.mode == "planet":
@@ -218,10 +227,12 @@ class SpaceSimulation3D:
         else:
             self.handle_free_camera_keys(keys, dt)
 
-    def tilt_camera(self, amount):
+    def tilt_camera(self, amount: float) -> None:
+        """Raise or lower the third-person camera by `amount` radians."""
         self.camera_elevation = max(CAMERA_ELEVATION_MIN, min(CAMERA_ELEVATION_MAX, self.camera_elevation + amount))
 
-    def handle_player_keys(self, keys, dt):
+    def handle_player_keys(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
+        """Walk, run and turn the player."""
         speed = (RUN_SPEED if keys[pygame.K_LSHIFT] else WALK_SPEED) * dt
         forward = (keys[pygame.K_w] - keys[pygame.K_s]) * speed
         sideways = (keys[pygame.K_d] - keys[pygame.K_a]) * speed
@@ -230,7 +241,8 @@ class SpaceSimulation3D:
         self.player.turn((keys[pygame.K_RIGHT] - keys[pygame.K_LEFT]) * TURN_SPEED * dt)
         self.tilt_camera((keys[pygame.K_DOWN] - keys[pygame.K_UP]) * self.rotation_speed * dt)
 
-    def handle_free_camera_keys(self, keys, dt):
+    def handle_free_camera_keys(self, keys: pygame.key.ScancodeWrapper, dt: float) -> None:
+        """Fly and turn the free camera."""
         speed = self.free_speed * (FREE_CAMERA_BOOST if keys[pygame.K_LSHIFT] else 1) * dt
         cos_yaw = math.cos(self.free_yaw)
         sin_yaw = math.sin(self.free_yaw)
@@ -246,7 +258,8 @@ class SpaceSimulation3D:
         self.free_pitch += (keys[pygame.K_UP] - keys[pygame.K_DOWN]) * self.rotation_speed * dt
         self.free_pitch = max(-math.pi/2 + 0.1, min(math.pi/2 - 0.1, self.free_pitch))
 
-    def update_camera(self):
+    def update_camera(self) -> None:
+        """Place the camera for the current mode."""
         if self.mode == "free":
             self.camera.set_yaw_pitch(self.free_position, self.free_yaw, self.free_pitch)
             return
@@ -265,7 +278,8 @@ class SpaceSimulation3D:
             position = self.planet.center + normalize(offset) * min_radius
         self.camera.look_at(position, target, player.normal)
 
-    def update(self, dt):
+    def update(self, dt: float) -> None:
+        """Advance the current scene by a real frame of `dt` seconds."""
         time = pygame.time.get_ticks() / 1000.0
         if self.scene == "menu":
             self.star_field.update(time)
@@ -283,10 +297,12 @@ class SpaceSimulation3D:
         self.player.update(dt)
         self.update_camera()
 
-    def light_direction(self):
+    def light_direction(self) -> Vector:
+        """Direction from the planet to the Sun."""
         return normalize(self.star_field.sun_position - self.planet.center)
 
-    def draw(self):
+    def draw(self) -> None:
+        """Draw the current scene and the HUD, then flip the display."""
         self.screen.fill(BLACK)
         if self.scene == "menu":
             self.star_field.draw(self.screen, self.camera)
@@ -314,16 +330,19 @@ class SpaceSimulation3D:
 
         pygame.display.flip()
 
-    def draw_text_lines(self, lines, x, color, title_color=None):
+    def draw_text_lines(self, lines: list[str], x: float, color: Color, title_color: Color | None = None) -> None:
+        """Draw lines of text in a column starting at `x`."""
         for i, line in enumerate(lines):
             line_color = title_color if (i == 0 and title_color) else color
             self.screen.blit(self.font.render(line, True, line_color), (x, 10 + i * 22))
 
-    def draw_centered(self, font, text, y, color):
+    def draw_centered(self, font: pygame.font.Font, text: str, y: float, color: Color) -> None:
+        """Draw `text` centred horizontally at height `y`."""
         surface = font.render(text, True, color)
         self.screen.blit(surface, ((SCREEN_WIDTH - surface.get_width()) // 2, y))
 
-    def draw_menu(self):
+    def draw_menu(self) -> None:
+        """Draw the title and the list of scenarios."""
         self.draw_centered(self.title_font, "TheBlackHole", 170, MENU_TITLE_COLOR)
         self.draw_centered(self.font, "A 3D space simulation with a custom renderer", 240, MENU_ITEM_COLOR)
         for i, (_, title, description) in enumerate(SCENARIOS):
@@ -335,7 +354,8 @@ class SpaceSimulation3D:
         self.draw_centered(self.font, "Up/Down + Enter or 1-3 to start  -  ESC in a scene returns here  -  ESC to quit",
                            SCREEN_HEIGHT - 60, HUD_STATUS_COLOR)
 
-    def draw_ui(self):
+    def draw_ui(self) -> None:
+        """Draw the controls on the left and the status on the right."""
         if self.scene == "blackhole":
             instructions, status_info = self.black_hole_hud()
         elif self.scene == "galaxy":
@@ -407,7 +427,8 @@ class SpaceSimulation3D:
             pygame.draw.line(self.screen, (100, 100, 100),
                            (center_x, center_y - 10), (center_x, center_y + 10), 2)
 
-    def black_hole_hud(self):
+    def black_hole_hud(self) -> tuple[list[str], list[str]]:
+        """Controls and status lines for the black hole scene."""
         instructions = [
             "TheBlackHole - Black Hole",
             "WASD - Move forward/back/left/right",
@@ -433,7 +454,8 @@ class SpaceSimulation3D:
         ]
         return instructions, status_info
 
-    def galaxy_hud(self):
+    def galaxy_hud(self) -> tuple[list[str], list[str]]:
+        """Controls and status lines for the galaxy scene."""
         instructions = [
             "TheBlackHole - Galaxy",
             "WASD - Move forward/back/left/right",
@@ -452,7 +474,8 @@ class SpaceSimulation3D:
         ]
         return instructions, status_info
 
-    def run(self):
+    def run(self) -> None:
+        """Main loop: events, update and draw until the window closes."""
         while self.running:
             dt = min(self.clock.tick(FPS) / 1000.0, MAX_FRAME_TIME)
             self.handle_events(dt)
@@ -463,7 +486,8 @@ class SpaceSimulation3D:
         sys.exit()
 
 
-def main():
+def main() -> None:
+    """Start pygame and run the simulation."""
     pygame.init()
     print("Starting TheBlackHole... pick a scenario in the menu (1-3).")
     simulation = SpaceSimulation3D()

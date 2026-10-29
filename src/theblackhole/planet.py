@@ -1,9 +1,14 @@
 """A spherical planet drawn as a shaded mesh."""
 
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
+from numpy.typing import NDArray
 
+from .aliases import ArrayLike, Vector
 from .config import (
     AMBIENT_LIGHT,
     DEEP_OCEAN,
@@ -20,11 +25,16 @@ from .config import (
 )
 from .render import clip_polygon_near, fill_polygon
 
+if TYPE_CHECKING:
+    import pygame
+
+    from .camera import Camera
+
 
 class Planet:
     """A spherical planet drawn as a shaded mesh of flat faces."""
 
-    def __init__(self, center, radius, seed=7):
+    def __init__(self, center: ArrayLike, radius: float, seed: int = 7) -> None:
         self.center = np.array(center, dtype=float)
         self.radius = radius
         rng = np.random.default_rng(seed)
@@ -32,7 +42,7 @@ class Planet:
         self.near_mesh = self._build_mesh(PLANET_NEAR_DETAIL, rng)
         self.far_mesh = self._build_mesh(PLANET_FAR_DETAIL, rng)
 
-    def _build_mesh(self, subdivisions, rng):
+    def _build_mesh(self, subdivisions: int, rng: np.random.Generator) -> tuple[Vector, Vector, Vector, Vector, Vector]:
         """Build a "cube sphere": a subdivided cube pushed out into a sphere.
 
         Unlike a latitude/longitude sphere, all faces have about the same size,
@@ -48,7 +58,8 @@ class Planet:
         corner = (i * (n + 1) + j).ravel()
         quad = np.stack([corner, corner + n + 1, corner + n + 2, corner + 1], axis=-1)
 
-        directions, faces = [], []
+        directions: list[Vector] = []
+        faces: list[NDArray[np.intp]] = []
         for axis in range(3):
             for sign in (-1.0, 1.0):
                 points = np.empty((len(a), 3))
@@ -69,7 +80,7 @@ class Planet:
         return vertices, faces, normals, centers, colors
 
     @staticmethod
-    def _terrain(normals):
+    def _terrain(normals: Vector) -> tuple[Vector, Vector, Vector, Vector]:
         """Layered sine waves: `continents` > 0 is land, `detail` adds small variations."""
         x, y, z = np.atleast_2d(normals).T
         continents = (np.sin(3.1 * x + 1.7) * np.sin(2.3 * y + 0.5) * np.sin(2.9 * z + 2.1)
@@ -79,11 +90,12 @@ class Planet:
         is_land = (continents > 0.05) & ~is_ice
         return continents, detail, is_land, is_ice
 
-    def is_land(self, normal):
+    def is_land(self, normal: Vector) -> bool:
+        """Whether the surface in direction `normal` is above sea level."""
         return bool(self._terrain(normal)[2][0])
 
     @classmethod
-    def _surface_colors(cls, normals, rng):
+    def _surface_colors(cls, normals: Vector, rng: np.random.Generator) -> Vector:
         """Paint oceans, land and ice caps."""
         continents, detail, is_land, is_ice = cls._terrain(normals)
 
@@ -103,7 +115,8 @@ class Planet:
         # Small random variation per face so movement on the ground is easy to see
         return colors * rng.uniform(0.9, 1.1, (len(normals), 1))
 
-    def draw(self, screen, camera, light_dir):
+    def draw(self, screen: pygame.Surface, camera: Camera, light_dir: Vector) -> None:
+        """Draw the visible faces, lit from `light_dir`."""
         distance = np.linalg.norm(camera.position - self.center)
         vertices, faces, normals, centers, colors = (
             self.near_mesh if distance < self.radius * PLANET_LOD_DISTANCE else self.far_mesh)

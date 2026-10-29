@@ -1,16 +1,25 @@
 """The Sun: a bigger, brighter star with a corona and flares."""
 
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
 
 import pygame
 
+from .aliases import Lens
 from .config import SCREEN_HEIGHT, SCREEN_WIDTH, SUN_COLOR
 from .glow import draw_glow
 from .star import Star3D
 
+if TYPE_CHECKING:
+    from .camera import Camera
+
 
 class Sun3D(Star3D):
-    def __init__(self, x, y, z):
+    """The Sun: a large bright star with a corona, glow and flares."""
+
+    def __init__(self, x: float, y: float, z: float) -> None:
         # Sun properties based on real astronomical data
         sun_size = 10.0  # Larger visual size for the Sun
         sun_color = SUN_COLOR
@@ -30,15 +39,17 @@ class Sun3D(Star3D):
         self.corona_size = 15  # Corona glow size
         self.flare_intensity = 0.5  # Solar flare effect
 
-    def update(self, time):
+    def update(self, time: float) -> None:
         # Sun has more complex twinkling (solar activity)
+        """Update the slow changes of the Sun's brightness."""
         primary_twinkle = math.sin(time * 0.01) * 0.1
         secondary_twinkle = math.sin(time * 0.03 + 1.5) * 0.05
         solar_flare = math.sin(time * 0.02 + 2.0) * 0.1
 
         self.current_brightness = max(1.5, self.brightness + primary_twinkle + secondary_twinkle + solar_flare)
 
-    def draw(self, screen, camera, lens=None):  # The Sun is never lensed
+    def draw(self, screen: pygame.Surface, camera: Camera, lens: Lens | None = None) -> None:  # The Sun is never lensed
+        """Draw the glow, corona, body, core and flares."""
         projection = self.project_to_2d(camera)
 
         if projection is None:
@@ -102,5 +113,6 @@ class Sun3D(Star3D):
                        (int(screen_x - diagonal_length), int(screen_y + diagonal_length)),
                        (int(screen_x + diagonal_length), int(screen_y - diagonal_length)), 2)
 
-    def get_mass_category(self):
+    def get_mass_category(self) -> str:
+        """The Sun is its own category."""
         return "Sun"

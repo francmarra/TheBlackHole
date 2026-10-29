@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "ruff==0.17.3", "pillow"]
+dev = ["pytest", "ruff==0.17.3", "pillow", "mypy"]
 
 [project.scripts]
 theblackhole = "theblackhole.main:main"
@@ -33,3 +33,11 @@ target-version = "py310"
 line-length = 120
 # Legacy 2D version, kept as-is for reference
 extend-exclude = ["space_simulation.py"]
+
+[tool.ruff.lint]
+# Type hints and docstrings are required in the package (Day 23), not in tests and scripts
+extend-select = ["ANN", "D101", "D102", "D103", "D204", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN", "D"]
+"scripts/*" = ["ANN", "D"]

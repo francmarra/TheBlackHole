@@ -1,10 +1,15 @@
 """A black hole: a heavy body with an event horizon, and the scene around it."""
 
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pygame
+from numpy.typing import NDArray
 
+from .aliases import ArrayLike, Point2, Vector
 from .config import (
     BLACK_HOLE_MASS,
     BLACK_HOLE_STARS,
@@ -28,25 +33,33 @@ from .glow import draw_glow
 from .physics import Body, GravitySystem
 from .starfield import StarField3D
 
+if TYPE_CHECKING:
+    from .camera import Camera
 
-def schwarzschild_radius(mass, g=GRAVITY_CONSTANT, c=SPEED_OF_LIGHT):
+
+def schwarzschild_radius(mass: float, g: float = GRAVITY_CONSTANT, c: float = SPEED_OF_LIGHT) -> float:
     """Radius of the event horizon of a non-rotating black hole: r_s = 2GM/c²."""
     return 2 * g * mass / c**2
 
 
 class BlackHole(Body):
-    def __init__(self, position=(0.0, 0.0, 0.0), mass=BLACK_HOLE_MASS):
+    """A non-rotating (Schwarzschild) black hole."""
+
+    def __init__(self, position: ArrayLike = (0.0, 0.0, 0.0), mass: float = BLACK_HOLE_MASS) -> None:
         super().__init__(position, (0, 0, 0), mass)
 
     @property
-    def horizon_radius(self):
+    def horizon_radius(self) -> float:
+        """Schwarzschild radius r_s of this black hole."""
         return schwarzschild_radius(self.mass)
 
     @property
-    def shadow_radius(self):
+    def shadow_radius(self) -> float:
+        """Radius of the dark shadow seen from far away."""
         return SHADOW_FACTOR * self.horizon_radius
 
-    def draw(self, screen, camera):
+    def draw(self, screen: pygame.Surface, camera: Camera) -> None:
+        """Draw the shadow with its glow and photon ring."""
         projection = camera.project(*self.position)
         if projection is None:
             return
@@ -59,7 +72,7 @@ class BlackHole(Body):
         pygame.draw.circle(screen, (0, 0, 0), center, radius_px)
 
 
-def lensed_offsets(beta, einstein_radius):
+def lensed_offsets(beta: float, einstein_radius: float) -> tuple[float, float]:
     """Point-mass lens: a source at angle `beta` from the lens appears at two angles.
 
     theta = (beta ± sqrt(beta² + 4 θ_E²)) / 2. The + image is outside the Einstein ring,
@@ -69,7 +82,7 @@ def lensed_offsets(beta, einstein_radius):
     return (beta + root) / 2, (beta - root) / 2
 
 
-def hud_readout(black_hole, position, speed):
+def hud_readout(black_hole: BlackHole, position: ArrayLike, speed: float) -> dict[str, float]:
     """Numbers shown in the HUD for an observer at `position` moving at `speed`."""
     distance = float(np.linalg.norm(np.asarray(position, dtype=float) - black_hole.position))
     r_s = black_hole.horizon_radius
@@ -91,7 +104,7 @@ def hud_readout(black_hole, position, speed):
 class GravitationalLens:
     """Moves background stars on screen as the black hole's gravity bends their light."""
 
-    def __init__(self, black_hole, camera):
+    def __init__(self, black_hole: BlackHole, camera: Camera) -> None:
         self.camera = camera
         self.lens_distance = float(np.linalg.norm(black_hole.position - camera.position))
         projection = camera.project(*black_hole.position)
@@ -99,7 +112,8 @@ class GravitationalLens:
         self.r_s = black_hole.horizon_radius
         self.shadow_px = black_hole.shadow_radius * camera.focal_length / max(self.lens_distance, 1e-9)
 
-    def __call__(self, x, y, source_distance):
+    def __call__(self, x: float, y: float, source_distance: float) -> list[Point2]:
+        """Lensed screen positions of a star drawn at (x, y) that is `source_distance` away."""
         if self.center is None or source_distance <= self.lens_distance:
             return [(x, y)]
         # Einstein radius in radians: θ_E = sqrt(4GM/c² · D_ls / (D_l · D_s)), and 4GM/c² = 2 r_s
@@ -121,7 +135,7 @@ class GravitationalLens:
 class AccretionDisk:
     """Massless particles orbiting a black hole, integrated together as NumPy arrays."""
 
-    def __init__(self, black_hole, count=DISK_PARTICLES, seed=1):
+    def __init__(self, black_hole: BlackHole, count: int = DISK_PARTICLES, seed: int = 1) -> None:
         self.black_hole = black_hole
         self.rng = np.random.default_rng(seed)
         r_s = black_hole.horizon_radius
@@ -132,7 +146,7 @@ class AccretionDisk:
         self.spawn(np.arange(count))
         self.accelerations = self._accelerations()
 
-    def spawn(self, index):
+    def spawn(self, index: NDArray[np.intp]) -> None:
         """Put particles `index` on circular orbits somewhere in the disk."""
         n = len(index)
         # More particles near the hole: uniform in area would leave the hot inner edge too empty
@@ -146,12 +160,12 @@ class AccretionDisk:
         heat = ((self.outer - radius) / (self.outer - self.inner))[:, None]
         self.colors[index] = np.array(DISK_COOL_COLOR) * (1 - heat) + np.array(DISK_HOT_COLOR) * heat
 
-    def _accelerations(self):
+    def _accelerations(self) -> Vector:
         offset = self.black_hole.position - self.positions
         dist2 = np.einsum("ij,ij->i", offset, offset)
         return GRAVITY_CONSTANT * self.black_hole.mass * offset / (dist2 * np.sqrt(dist2))[:, None]
 
-    def step(self, dt):
+    def step(self, dt: float) -> int:
         """Advance the disk; returns how many particles crossed the horizon (they respawn outside)."""
         self.velocities += 0.5 * dt * self.accelerations
         self.positions += dt * self.velocities
@@ -166,7 +180,14 @@ class AccretionDisk:
             self.accelerations[captured] = self._accelerations()[captured]
         return len(captured)
 
-    def draw(self, screen, camera, min_distance=0.0, max_distance=math.inf):
+    def draw(
+        self,
+        screen: pygame.Surface,
+        camera: Camera,
+        min_distance: float = 0.0,
+        max_distance: float = math.inf,
+    ) -> None:
+        """Draw the particles at [min_distance, max_distance) from the camera, far to near."""
         cam = camera.to_camera_space(self.positions)
         distance = np.linalg.norm(self.positions - camera.position, axis=1)
         keep = np.nonzero((cam[:, 2] > 1.0) & (distance >= min_distance) & (distance < max_distance))[0]
@@ -191,20 +212,22 @@ class Rock(Body):
 class BlackHoleScene:
     """A black hole at the origin in front of a field of distant stars."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.black_hole = BlackHole()
         self.gravity = GravitySystem([self.black_hole])
         self.disk = AccretionDisk(self.black_hole)
         self.star_field = StarField3D(BLACK_HOLE_STARS, with_sun=False)
-        self.rocks = []
+        self.rocks: list[Rock] = []
         self.captured = 0  # Everything that crossed the event horizon so far
 
-    def throw_rock(self, position, direction):
+    def throw_rock(self, position: ArrayLike, direction: ArrayLike) -> None:
+        """Throw a rock from `position` along `direction`."""
         rock = Rock(position, np.asarray(direction, dtype=float) * ROCK_SPEED, mass=1.0)
         self.rocks.append(rock)
         self.gravity.add(rock)
 
-    def update(self, dt, time):
+    def update(self, dt: float, time: float) -> None:
+        """Advance the stars, the gravity, the disk and the captures by `dt` seconds."""
         self.star_field.update(time)
         substeps = max(1, math.ceil(dt / PHYSICS_MAX_STEP))
         for _ in range(substeps):
@@ -212,14 +235,22 @@ class BlackHoleScene:
             self.captured += self.disk.step(dt / substeps)
             self.capture_rocks()
 
-    def capture_rocks(self):
+    def capture_rocks(self) -> None:
+        """Remove the rocks that crossed the event horizon."""
         for rock in list(self.rocks):
             if np.linalg.norm(rock.position - self.black_hole.position) < self.black_hole.horizon_radius:
                 self.rocks.remove(rock)
                 self.gravity.remove(rock)
                 self.captured += 1
 
-    def draw_rocks(self, screen, camera, min_distance=0.0, max_distance=math.inf):
+    def draw_rocks(
+        self,
+        screen: pygame.Surface,
+        camera: Camera,
+        min_distance: float = 0.0,
+        max_distance: float = math.inf,
+    ) -> None:
+        """Draw the rocks at [min_distance, max_distance) from the camera."""
         for rock in self.rocks:
             distance = float(np.linalg.norm(rock.position - camera.position))
             projection = camera.project(*rock.position)
@@ -229,7 +260,8 @@ class BlackHoleScene:
             radius_px = max(2, int(rock.radius * camera.focal_length / depth))
             pygame.draw.circle(screen, rock.color, (int(x), int(y)), radius_px)
 
-    def draw(self, screen, camera):
+    def draw(self, screen: pygame.Surface, camera: Camera) -> None:
+        """Draw the scene: lensed stars, disk, rocks and the black hole, in depth order."""
         hole_distance = float(np.linalg.norm(camera.position - self.black_hole.position))
         lens = GravitationalLens(self.black_hole, camera)
         self.star_field.draw(screen, camera, min_distance=hole_distance, lens=lens)

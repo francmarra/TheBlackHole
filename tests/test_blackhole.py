@@ -29,7 +29,8 @@ def test_disk_particles_start_inside_the_disk_and_keep_orbiting():
     for _ in range(600):
         disk.step(1 / 120)
     radius = np.linalg.norm(disk.positions - hole.position, axis=1)
-    assert radius / np.linalg.norm(np.c_[start_radius, np.zeros(200)], axis=1) == pytest.approx(1, abs=0.15)  # drag shrinks orbits ~2 % per second
+    # Drag shrinks the orbits by ~2 % per second, so after 5 s they are still close to where they started
+    assert radius / start_radius == pytest.approx(1, abs=0.15)
 
 
 def test_rock_thrown_at_the_hole_is_captured():

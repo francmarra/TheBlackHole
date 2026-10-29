@@ -1,13 +1,21 @@
 """The astronaut that walks on the planet."""
 
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pygame
 
+from .aliases import ArrayLike, Color, Vector
 from .camera import normalize
 from .config import BACKPACK, GRAVITY, JUMP_SPEED, NEAR_PLANE, SUIT, SUIT_DARK, VISOR
 from .render import draw_faces, shade_color
+
+if TYPE_CHECKING:
+    from .camera import Camera
+    from .planet import Planet
 
 # Corner order inside a box: index = x_bit * 4 + y_bit * 2 + z_bit
 BOX_FACES = [
@@ -24,7 +32,7 @@ BOX_FACES = [
 class Player:
     """An astronaut walking on the surface of a planet."""
 
-    def __init__(self, planet, normal, heading):
+    def __init__(self, planet: Planet, normal: Vector, heading: ArrayLike) -> None:
         self.planet = planet
         self.normal = normalize(np.asarray(normal, dtype=float))  # "Up" at the player's position
         self.heading = np.zeros(3)                                 # Where the player is facing
@@ -33,26 +41,30 @@ class Player:
         self.vertical_speed = 0.0
         self.walk_phase = 0.0
 
-    def _set_heading(self, heading):
+    def _set_heading(self, heading: ArrayLike) -> None:
         heading = np.asarray(heading, dtype=float)
         self.heading = normalize(heading - np.dot(heading, self.normal) * self.normal)
 
     @property
-    def right(self):
+    def right(self) -> Vector:
+        """Unit vector to the player's right, along the ground."""
         return np.cross(self.normal, self.heading)
 
     @property
-    def position(self):
+    def position(self) -> Vector:
+        """World position of the player's feet."""
         return self.planet.center + self.normal * (self.planet.radius + self.altitude)
 
     @property
-    def on_ground(self):
+    def on_ground(self) -> bool:
+        """Whether the player is standing on the ground."""
         return self.altitude <= 0.0
 
-    def turn(self, angle):
+    def turn(self, angle: float) -> None:
+        """Turn the player around the up direction by `angle` radians."""
         self._set_heading(self.heading * math.cos(angle) + self.right * math.sin(angle))
 
-    def move(self, forward, sideways):
+    def move(self, forward: float, sideways: float) -> None:
         """Walk along the curved surface: moving means rotating around the planet's center."""
         step = self.heading * forward + self.right * sideways
         distance = np.linalg.norm(step)
@@ -68,11 +80,13 @@ class Player:
         self._set_heading(heading)
         self.walk_phase += distance * 1.5
 
-    def jump(self):
+    def jump(self) -> None:
+        """Jump if standing on the ground."""
         if self.on_ground:
             self.vertical_speed = JUMP_SPEED
 
-    def update(self, dt):
+    def update(self, dt: float) -> None:
+        """Apply gravity and advance the walk animation by `dt` seconds."""
         if self.on_ground and self.vertical_speed <= 0:
             self.altitude = 0.0
             self.vertical_speed = 0.0
@@ -80,7 +94,7 @@ class Player:
         self.vertical_speed -= GRAVITY * dt
         self.altitude = max(0.0, self.altitude + self.vertical_speed * dt)
 
-    def _parts(self):
+    def _parts(self) -> list[tuple[tuple[float, float, float], tuple[float, float, float], Color]]:
         """Boxes in local space (x right, y up, z forward): (min corner, max corner, color)."""
         swing = 0.35 * math.sin(self.walk_phase) if self.on_ground else 0.25
         return [
@@ -94,7 +108,8 @@ class Player:
             ((-0.28, 2.45, 0.3), (0.28, 2.85, 0.36), VISOR),                     # Visor
         ]
 
-    def draw(self, screen, camera, light_dir):
+    def draw(self, screen: pygame.Surface, camera: Camera, light_dir: Vector) -> None:
+        """Draw the astronaut and its shadow."""
         basis = np.array([self.right, self.normal, self.heading])  # local -> world rotation
         origin = self.position
         self._draw_shadow(screen, camera)
@@ -117,7 +132,7 @@ class Player:
                 faces.append((polygon[:, 2].mean(), polygon, shade_color(color, normal, light_dir, sunlight)))
         draw_faces(screen, camera, faces)
 
-    def _draw_shadow(self, screen, camera):
+    def _draw_shadow(self, screen: pygame.Surface, camera: Camera) -> None:
         size = max(0.2, 1.0 - self.altitude * 0.15)
         ground = self.planet.center + self.normal * (self.planet.radius + 0.05)
         points = [ground + self.right * math.cos(a) * 0.8 * size + self.heading * math.sin(a) * 0.6 * size

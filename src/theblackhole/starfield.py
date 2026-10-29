@@ -1,22 +1,41 @@
 """The Sun and a random field of stars around it."""
 
+from __future__ import annotations
+
 import math
 import random
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
+import numpy as np
+
+from .aliases import ArrayLike, Lens
 from .config import NUM_STARS, STAR_MIN_SUN_DISTANCE, STARFIELD_EXTENT
 from .star import Star3D
 from .sun import Sun3D
 
+if TYPE_CHECKING:
+    import pygame
+
+    from .camera import Camera
+
 
 class StarField3D:
-    def __init__(self, num_stars=NUM_STARS, clear_zones=(), with_sun=True):
-        self.stars = []
-        self.sun = None
+    """The Sun (optional) and a random field of stars, kept away from the clear zones."""
+
+    def __init__(
+        self,
+        num_stars: int = NUM_STARS,
+        clear_zones: Sequence[tuple[ArrayLike, float]] = (),
+        with_sun: bool = True,
+    ) -> None:
+        self.stars: list[Star3D] = []
+        self.sun: Sun3D | None = None
         self.clear_zones = clear_zones  # (center, radius) regions kept free of stars
         self.with_sun = with_sun
         self.generate_stars(num_stars)
 
-    def generate_stars(self, num_stars):
+    def generate_stars(self, num_stars: int) -> None:
         """Generate a 3D distribution of stars with the Sun at the center"""
         # Clear existing stars
         self.stars = []
@@ -25,6 +44,7 @@ class StarField3D:
         if self.with_sun:
             self.sun = Sun3D(0, 0, 0)
             self.stars.append(self.sun)
+        self.sun_position = np.zeros(3)  # The Sun (or the scene's center) is at the origin
 
         # Generate other stars around the Sun
         while len(self.stars) < num_stars:
@@ -58,11 +78,19 @@ class StarField3D:
             star = Star3D(x, y, z, size, brightness=brightness)
             self.stars.append(star)
 
-    def update(self, time):
+    def update(self, time: float) -> None:
+        """Update the twinkling of every star."""
         for star in self.stars:
             star.update(time)
 
-    def draw(self, screen, camera, min_distance=0.0, max_distance=math.inf, lens=None):
+    def draw(
+        self,
+        screen: pygame.Surface,
+        camera: Camera,
+        min_distance: float = 0.0,
+        max_distance: float = math.inf,
+        lens: Lens | None = None,
+    ) -> None:
         """Draw the stars whose distance to the camera is within [min_distance, max_distance)."""
         cx, cy, cz = camera._pos
         min_sq, max_sq = min_distance * min_distance, max_distance * max_distance

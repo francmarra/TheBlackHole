@@ -1,10 +1,14 @@
 """A spiral galaxy: stars on a flat rotation curve around a central black hole."""
 
+from __future__ import annotations
+
 import math
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pygame
 
+from .aliases import Vector
 from .blackhole import BlackHole
 from .config import (
     GALAXY_ARM_COLOR,
@@ -20,8 +24,11 @@ from .config import (
 )
 from .glow import draw_glow
 
+if TYPE_CHECKING:
+    from .camera import Camera
 
-def rotation_speed(radius, v0=GALAXY_ROTATION_SPEED, core=GALAXY_CORE_RADIUS):
+
+def rotation_speed(radius: Vector, v0: float = GALAXY_ROTATION_SPEED, core: float = GALAXY_CORE_RADIUS) -> Vector:
     """Circular speed at `radius`: rises in the core, then stays flat like in real spiral galaxies."""
     return v0 * radius / np.sqrt(radius * radius + core * core)
 
@@ -33,7 +40,7 @@ class Galaxy:
     so the spiral arms they start in wind up as time passes.
     """
 
-    def __init__(self, count=GALAXY_STARS, seed=4):
+    def __init__(self, count: int = GALAXY_STARS, seed: int = 4) -> None:
         rng = np.random.default_rng(seed)
         self.black_hole = BlackHole(mass=GALAXY_BLACK_HOLE_MASS)
         radius = GALAXY_RADIUS * np.sqrt(rng.random(count)) + 20
@@ -49,13 +56,14 @@ class Galaxy:
         self.colors = np.array(GALAXY_ARM_COLOR) * (1 - core) + np.array(GALAXY_CORE_COLOR) * core
         self.accelerations = self._accelerations()
 
-    def _accelerations(self):
+    def _accelerations(self) -> Vector:
         # a = v(r)² / r towards the center, which keeps every star on its circular orbit
         r = np.linalg.norm(self.positions, axis=1)
         v = rotation_speed(r)
         return -self.positions * (v * v / (r * r))[:, None]
 
-    def step(self, dt):
+    def step(self, dt: float) -> None:
+        """Advance every star by `dt` seconds (Velocity Verlet)."""
         self.velocities += 0.5 * dt * self.accelerations
         self.positions += dt * self.velocities
         self.accelerations = self._accelerations()
@@ -63,19 +71,24 @@ class Galaxy:
 
 
 class GalaxyScene:
-    def __init__(self):
+    """The galaxy seen with the free camera."""
+
+    def __init__(self) -> None:
         self.galaxy = Galaxy()
 
-    def update(self, dt, time):
+    def update(self, dt: float, time: float) -> None:
+        """Advance the galaxy by `dt` seconds."""
         substeps = max(1, math.ceil(dt / PHYSICS_MAX_STEP))
         for _ in range(substeps):
             self.galaxy.step(dt / substeps)
 
-    def draw(self, screen, camera):
+    def draw(self, screen: pygame.Surface, camera: Camera) -> None:
+        """Draw the bulge glow, the stars far to near and the central black hole."""
         galaxy = self.galaxy
         center = camera.project(0.0, 0.0, 0.0)
         if center is not None:  # Bright bulge of old stars
-            draw_glow(screen, center[:2], 0.25 * GALAXY_RADIUS * camera.focal_length / center[2], GALAXY_CORE_COLOR, 0.5)
+            bulge_px = 0.25 * GALAXY_RADIUS * camera.focal_length / center[2]
+            draw_glow(screen, center[:2], bulge_px, GALAXY_CORE_COLOR, 0.5)
         cam = camera.to_camera_space(galaxy.positions)
         keep = np.nonzero(cam[:, 2] > 1.0)[0]
         keep = keep[np.argsort(-cam[keep, 2])]
