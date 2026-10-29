@@ -34,7 +34,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 
 ## Fase 3 — O buraco negro (dias 15–21)
 
-- [ ] **Dia 15** — Classe `BlackHole` com horizonte de eventos (raio de Schwarzschild)
+- [x] **Dia 15** — Classe `BlackHole` com horizonte de eventos (raio de Schwarzschild)
 - [ ] **Dia 16** — Disco de acreção feito de partículas em rotação
 - [ ] **Dia 17** — Objetos capturados: tudo o que cruza o horizonte desaparece
 - [ ] **Dia 18** — Lente gravitacional aproximada (desviar a luz das estrelas de fundo)
@@ -72,3 +72,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | 12 | 2026-10-29 | **Extra (mesmo dia):** `GravitySystem.total_energy()` (cinética + potencial com softening); teste com órbita excêntrica (e = 0,6) durante ~10 voltas: erro máximo 2,5e-5 com Verlet contra 28 % com Euler explícito (2.º teste mostra a diferença) |
 | 13 | 2026-10-29 | **Extra (mesmo dia):** física vetorizada: estado em arrays (N, 3) com os `Body` como vistas; acelerações e energia com `einsum` em vez do ciclo par a par. 100 corpos: 30,8 → 0,52 ms por passo (~60x); 400 corpos: 7 ms. Teste novo compara com a fórmula par a par |
 | 14 | 2026-10-29 | **Extra (mesmo dia):** FPS já estava no HUD; `scripts/profile_frames.py` (cProfile sem janela). Gargalo: faces cortadas no plano near projetadas com dezenas de milhares de píxeis (90 % do tempo no `pygame.draw.polygon`). Recorte Sutherland-Hodgman ao ecrã (`fill_polygon`): planeta 19,5 → 10,4 ms/frame, câmara livre 28,1 → 12,3 ms; 4 testes |
+| 15 | 2026-10-29 | **Extra (mesmo dia):** `blackhole.py`: `BlackHole` (`Body`) com raio de Schwarzschild r_s = 2GM/c² (c em unidades da cena → r_s ≈ 40) e sombra de 2,6 r_s com anel de fotões; `BlackHoleScene` com estrelas sem Sol; tecla `B` alterna entre o Sistema Solar e o buraco negro; 2 testes |
