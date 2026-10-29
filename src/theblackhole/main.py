@@ -37,6 +37,7 @@ from .config import (
 )
 from .planet import Planet
 from .player import Player
+from .solar_system import SolarSystem
 from .starfield import StarField3D
 
 
@@ -90,6 +91,7 @@ class SpaceSimulation3D:
         self.star_field = StarField3D(NUM_STARS, clear_zones=[(tuple(self.planet.center), PLANET_STAR_CLEAR_RADIUS)])
         sun = self.star_field.sun
         self.star_field.sun_position = np.array([sun.x, sun.y, sun.z], dtype=float)
+        self.solar_system = SolarSystem(self.star_field.sun_position)
 
     def toggle_mode(self):
         if self.mode == "planet":
@@ -188,6 +190,7 @@ class SpaceSimulation3D:
     def update(self, dt):
         time = pygame.time.get_ticks() / 1000.0
         self.star_field.update(time)
+        self.solar_system.update(dt)
         self.player.update(dt)
         self.update_camera()
 
@@ -200,8 +203,10 @@ class SpaceSimulation3D:
         # Stars behind the planet first, then the planet hides them, then the ones in front
         planet_distance = float(np.linalg.norm(self.camera.position - self.planet.center))
         self.star_field.draw(self.screen, self.camera, min_distance=planet_distance)
+        self.solar_system.draw(self.screen, self.camera, min_distance=planet_distance)
         self.planet.draw(self.screen, self.camera, self.light_direction())
         self.player.draw(self.screen, self.camera, self.light_direction())
+        self.solar_system.draw(self.screen, self.camera, max_distance=planet_distance)
         self.star_field.draw(self.screen, self.camera, max_distance=planet_distance)
 
         # Draw UI
@@ -257,6 +262,7 @@ class SpaceSimulation3D:
             status_info = [
                 f"FPS: {self.clock.get_fps():.0f}",
                 f"Stars: {len(self.star_field.stars)}",
+                f"Orbiting Planets: {len(self.solar_system.planets)}",
                 f"Sun Mass: {sun.mass:.2e} kg",
                 f"Sun Distance: {np.linalg.norm(position - self.star_field.sun_position):.0f} units",
                 f"Planet Distance: {np.linalg.norm(position - self.planet.center):.0f} units",

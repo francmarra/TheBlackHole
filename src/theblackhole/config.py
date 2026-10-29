@@ -80,3 +80,14 @@ MAX_FRAME_TIME = 0.05        # seconds; clamps dt after stalls
 # Gravity (scene units, not SI: tuned so orbits look good on screen)
 GRAVITY_CONSTANT = 1.0
 GRAVITY_SOFTENING = 1.0  # Keeps the force finite when two bodies get very close
+PHYSICS_MAX_STEP = 1 / 120  # seconds; frames longer than this are split into substeps
+
+# Solar system (orbits in the XZ plane around the Sun at the origin)
+SUN_GRAVITY_MASS = 6.0e5
+ORBITING_PLANETS = [
+    # (orbit radius, planet radius, colour)
+    (220.0, 12.0, (180, 160, 140)),
+    (380.0, 20.0, (220, 180, 110)),
+    (560.0, 18.0, (190, 90, 60)),
+    (1500.0, 45.0, (200, 170, 130)),
+]
