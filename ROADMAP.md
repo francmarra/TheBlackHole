@@ -38,7 +38,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 - [x] **Dia 16** — Disco de acreção feito de partículas em rotação
 - [x] **Dia 17** — Objetos capturados: tudo o que cruza o horizonte desaparece
 - [x] **Dia 18** — Lente gravitacional aproximada (desviar a luz das estrelas de fundo)
-- [ ] **Dia 19** — Efeitos de brilho e glow
+- [x] **Dia 19** — Efeitos de brilho e glow
 - [ ] **Dia 20** — HUD com massa, distância ao buraco negro e velocidade
 - [ ] **Dia 21** — Menu inicial com cenários (Sistema Solar, Buraco Negro, Galáxia)
 
@@ -76,3 +76,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | 16 | 2026-10-29 | **Extra (mesmo dia):** `AccretionDisk`: 1500 partículas sem massa em órbita circular entre 3 e 10 r_s, integradas em arrays NumPy (Verlet) só com a gravidade do buraco negro; cor do branco quente (interior) ao vermelho (exterior); desenhadas atrás/à frente do buraco por profundidade (~4,7 ms/frame); 1 teste |
 | 17 | 2026-10-29 | **Extra (mesmo dia):** captura: o disco perde 1 % da velocidade por segundo e cai em espiral (~1 min desde 3 r_s); partículas que cruzam r_s contam como capturadas e renascem fora; tecla `F` atira rochas (`Rock` no `GravitySystem`, com `add`/`remove`) que desaparecem no horizonte; contador "Captured" no HUD; 3 testes |
 | 18 | 2026-10-29 | **Extra (mesmo dia):** lente gravitacional (lente pontual em espaço de ecrã): raio de Einstein θ_E = sqrt(2 r_s · D_ls / (D_l · D_s)); cada estrela atrás do buraco passa a 2 imagens θ = (β ± sqrt(β² + 4θ_E²))/2 e as que caem dentro da sombra desaparecem; `Star.draw` aceita um `lens`; 1800 estrelas de fundo na cena; 3 testes da equação da lente |
+| 19 | 2026-10-29 | **Extra (mesmo dia):** `glow.py`: sprites de brilho radial (queda quadrática, em cache) desenhados com `BLEND_ADD`, por isso somam onde se sobrepõem; aplicados às partículas do disco (o interior quente fica a brilhar), ao anel de fotões e ao Sol; ~15,7 ms/frame na cena do buraco negro; 2 testes |
