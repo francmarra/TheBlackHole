@@ -86,3 +86,16 @@ def test_explicit_euler_would_drift_much_more():
             body.velocity += 0.002 * body.acceleration
         system._compute_accelerations()
     assert abs(system.total_energy() - start) / abs(start) > 1e-2
+
+
+def test_vectorised_accelerations_match_pairwise_formula():
+    rng = np.random.default_rng(3)
+    bodies = [Body(rng.normal(size=3) * 10, (0, 0, 0), mass) for mass in rng.uniform(1, 5, size=6)]
+    GravitySystem(bodies, softening=0.5)  # Turns the bodies into views of its arrays
+    for a in bodies:
+        expected = np.zeros(3)
+        for b in bodies:
+            if b is not a:
+                offset = b.position - a.position
+                expected += b.mass * offset / (offset @ offset + 0.25) ** 1.5
+        assert a.acceleration == pytest.approx(expected)

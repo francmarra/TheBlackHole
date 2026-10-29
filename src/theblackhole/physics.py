@@ -16,46 +16,53 @@ class Body:
 
 
 class GravitySystem:
-    """N bodies pulling on each other. Call `step(dt)` once per frame."""
+    """N bodies pulling on each other. Call `step(dt)` once per frame.
+
+    The state lives in (N, 3) NumPy arrays; each body's `position`, `velocity` and
+    `acceleration` become views into those arrays, so update them in place (`+=`).
+    """
 
     def __init__(self, bodies, g=GRAVITY_CONSTANT, softening=GRAVITY_SOFTENING):
         self.bodies = list(bodies)
         self.g = g
         self.softening = softening
+        self.positions = np.array([body.position for body in self.bodies], dtype=float).reshape(-1, 3)
+        self.velocities = np.array([body.velocity for body in self.bodies], dtype=float).reshape(-1, 3)
+        self.masses = np.array([body.mass for body in self.bodies], dtype=float)
+        self.accelerations = np.zeros_like(self.positions)
+        for i, body in enumerate(self.bodies):
+            body.position = self.positions[i]
+            body.velocity = self.velocities[i]
+            body.acceleration = self.accelerations[i]
         self._compute_accelerations()
 
+    def _pairs(self):
+        """Offsets between every pair of bodies (offsets[i, j] points from i to j) and softened distances²."""
+        offsets = self.positions[np.newaxis, :, :] - self.positions[:, np.newaxis, :]
+        dist2 = np.einsum("ijk,ijk->ij", offsets, offsets) + self.softening**2
+        return offsets, dist2
+
     def _compute_accelerations(self):
-        # shortcut: O(N²) pairwise loop, vectorised with NumPy on Day 13
-        for body in self.bodies:
-            body.acceleration = np.zeros(3)
-        eps2 = self.softening**2
-        for i, a in enumerate(self.bodies):
-            for b in self.bodies[i + 1 :]:
-                offset = b.position - a.position
-                dist2 = offset @ offset + eps2
-                pull = self.g * offset / (dist2 * np.sqrt(dist2))
-                a.acceleration += pull * b.mass
-                b.acceleration -= pull * a.mass
+        offsets, dist2 = self._pairs()
+        with np.errstate(divide="ignore"):
+            inv_dist3 = dist2**-1.5
+        np.fill_diagonal(inv_dist3, 0.0)  # A body does not pull on itself
+        self.accelerations[:] = self.g * np.einsum("ij,ijk->ik", inv_dist3 * self.masses, offsets)
 
     def step(self, dt):
         """Advance every body by `dt` seconds (Velocity Verlet: symplectic, 2nd order)."""
-        for body in self.bodies:
-            body.velocity += 0.5 * dt * body.acceleration
-            body.position += dt * body.velocity
+        self.velocities += 0.5 * dt * self.accelerations
+        self.positions += dt * self.velocities
         self._compute_accelerations()
-        for body in self.bodies:
-            body.velocity += 0.5 * dt * body.acceleration
+        self.velocities += 0.5 * dt * self.accelerations
 
     def total_momentum(self):
-        return sum((body.mass * body.velocity for body in self.bodies), np.zeros(3))
+        return self.masses @ self.velocities
 
     def total_energy(self):
         """Kinetic plus (softened) gravitational potential energy; constant for an exact integrator."""
-        kinetic = sum(0.5 * body.mass * (body.velocity @ body.velocity) for body in self.bodies)
-        potential = 0.0
-        eps2 = self.softening**2
-        for i, a in enumerate(self.bodies):
-            for b in self.bodies[i + 1 :]:
-                offset = b.position - a.position
-                potential -= self.g * a.mass * b.mass / np.sqrt(offset @ offset + eps2)
-        return kinetic + potential
+        kinetic = 0.5 * self.masses @ np.einsum("ij,ij->i", self.velocities, self.velocities)
+        _, dist2 = self._pairs()
+        i, j = np.triu_indices(len(self.bodies), k=1)
+        potential = -self.g * np.sum(self.masses[i] * self.masses[j] / np.sqrt(dist2[i, j]))
+        return float(kinetic + potential)
