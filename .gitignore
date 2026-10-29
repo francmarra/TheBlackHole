@@ -25,3 +25,6 @@ htmlcov/
 # Sistema
 Thumbs.db
 .DS_Store
+
+# Saved scenarios (F5)
+saves/

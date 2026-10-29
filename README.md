@@ -55,6 +55,7 @@ Start the program and pick a scenario in the menu (**Up/Down + Enter** or **1-3*
 
 ### Everywhere
 - **P**: pause, **+/-**: faster or slower time
+- **F5** / **F9**: save / load the current scenario as JSON (`saves/<scenario>.json`)
 - **F** (black hole): throw a rock
 - **N** (Solar System): new random star field
 
@@ -81,7 +82,7 @@ The original 2D version is still in `space_simulation.py`.
 
 ```bash
 pip install -e ".[dev]"
-pytest -q          # 47 tests: camera, physics, energy, orbits, black hole, lensing, galaxy, clipping
+pytest -q          # 58 tests: camera, physics, energy, orbits, black hole, lensing, galaxy, clipping, saves
 ruff check .
 python scripts/profile_frames.py   # ms per frame and a cProfile report, without a window
 python scripts/capture.py          # regenerates the images in docs/images
@@ -102,6 +103,7 @@ GitHub Actions runs `ruff` and `pytest` on every push and pull request.
   - `galaxy.py` - spiral galaxy on a flat rotation curve
   - `glow.py` - additive glow sprites
   - `timecontrol.py` - pause and simulation speed
+  - `scenario.py` - save and load scenarios as JSON, with validation
   - `star.py`, `sun.py`, `starfield.py` - stars, the Sun and the star field
   - `planet.py`, `player.py` - the planet mesh and the astronaut
 - `tests/` - pytest suite

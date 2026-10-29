@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pygame
@@ -23,6 +23,7 @@ from .config import (
     PHYSICS_MAX_STEP,
 )
 from .glow import draw_glow
+from .scenario import array
 
 if TYPE_CHECKING:
     from .camera import Camera
@@ -56,6 +57,26 @@ class Galaxy:
         self.colors = np.array(GALAXY_ARM_COLOR) * (1 - core) + np.array(GALAXY_CORE_COLOR) * core
         self.accelerations = self._accelerations()
 
+    def to_dict(self) -> dict[str, Any]:
+        """Positions, velocities and colours of every star."""
+        return {
+            "positions": np.round(self.positions, 3).tolist(),
+            "velocities": np.round(self.velocities, 4).tolist(),
+            "colors": self.colors.astype(int).tolist(),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> Galaxy:
+        """Rebuild a galaxy saved with `to_dict` (validates every value)."""
+        positions = array(data.get("positions"), "positions")
+        galaxy = cls.__new__(cls)
+        galaxy.black_hole = BlackHole(mass=GALAXY_BLACK_HOLE_MASS)
+        galaxy.positions = positions
+        galaxy.velocities = array(data.get("velocities"), "velocities", rows=len(positions))
+        galaxy.colors = np.clip(array(data.get("colors"), "colors", rows=len(positions)), 0, 255)
+        galaxy.accelerations = galaxy._accelerations()
+        return galaxy
+
     def _accelerations(self) -> Vector:
         # a = v(r)² / r towards the center, which keeps every star on its circular orbit
         r = np.linalg.norm(self.positions, axis=1)
@@ -73,8 +94,8 @@ class Galaxy:
 class GalaxyScene:
     """The galaxy seen with the free camera."""
 
-    def __init__(self) -> None:
-        self.galaxy = Galaxy()
+    def __init__(self, galaxy: Galaxy | None = None) -> None:
+        self.galaxy = galaxy or Galaxy()
 
     def update(self, dt: float, time: float) -> None:
         """Advance the galaxy by `dt` seconds."""

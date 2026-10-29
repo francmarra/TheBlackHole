@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import math
 import sys
+from pathlib import Path
 
 import numpy as np
 import pygame
 
+from . import scenario
 from .aliases import ArrayLike, Color, Vector
 from .blackhole import BlackHoleScene, hud_readout
 from .camera import Camera, normalize
@@ -40,11 +42,13 @@ from .config import (
     RUN_SPEED,
     SCREEN_HEIGHT,
     SCREEN_WIDTH,
+    TIME_SCALE_MAX,
+    TIME_SCALE_MIN,
     TURN_SPEED,
     WALK_SPEED,
     WHITE,
 )
-from .galaxy import GalaxyScene
+from .galaxy import Galaxy, GalaxyScene
 from .planet import Planet
 from .player import Player
 from .solar_system import SolarSystem
@@ -57,6 +61,10 @@ SCENARIOS = [
     ("blackhole", "Black Hole", "Accretion disk, gravitational lensing and the event horizon"),
     ("galaxy", "Galaxy", "3000 stars whose spiral arms wind up as the galaxy turns"),
 ]
+
+
+SAVE_FOLDER = Path("saves")
+MESSAGE_SECONDS = 3.0
 
 
 class SpaceSimulation3D:
@@ -79,6 +87,8 @@ class SpaceSimulation3D:
         self.camera = Camera()
         self.time = TimeControl()
         self.camera_speed = 0.0  # units per real second, for the HUD
+        self.message = ""  # Shown at the bottom of the screen for a few seconds (saves and loads)
+        self.message_until = 0.0
         self.mode = "planet"  # "planet" = third person on the planet, "free" = free-fly camera
         self.scene = "menu"  # "menu", or one of the SCENARIOS
         self.menu_index = 0
@@ -159,6 +169,56 @@ class SpaceSimulation3D:
         """The scene object for the black hole and galaxy scenarios (None for the Solar System)."""
         return {"blackhole": self.black_hole_scene, "galaxy": self.galaxy_scene}.get(self.scene)
 
+    def show_message(self, text: str) -> None:
+        """Show `text` at the bottom of the screen for a few seconds."""
+        self.message = text
+        self.message_until = pygame.time.get_ticks() / 1000.0 + MESSAGE_SECONDS
+
+    def save_path(self) -> Path:
+        """Where F5 saves and F9 loads the current scenario."""
+        return SAVE_FOLDER / f"{self.scene}.json"
+
+    def save_scene(self) -> None:
+        """Save the current scenario to JSON (F5)."""
+        if self.scene == "solar":
+            data = self.solar_system.to_dict()
+        elif self.scene == "blackhole" and self.black_hole_scene is not None:
+            data = self.black_hole_scene.to_dict()
+        elif self.scene == "galaxy" and self.galaxy_scene is not None:
+            data = self.galaxy_scene.galaxy.to_dict()
+        else:
+            return
+        path = self.save_path()
+        try:
+            scenario.save(path, self.scene, data, self.time.scale)
+        except OSError as error:
+            self.show_message(f"Could not save: {error}")
+            return
+        self.show_message(f"Saved to {path}")
+
+    def load_scene(self) -> None:
+        """Load the current scenario from JSON (F9), keeping the running one if the file is bad."""
+        path = self.save_path()
+        try:
+            document = scenario.load(path)
+            data = document["data"]
+            if document["scene"] != self.scene:
+                raise scenario.ScenarioError(f"{path.name} holds a '{document['scene']}' scenario")
+            if self.scene == "solar":
+                self.solar_system = SolarSystem.from_dict(data)
+            elif self.scene == "blackhole":
+                self.black_hole_scene = BlackHoleScene.from_dict(data)
+            else:
+                self.galaxy_scene = GalaxyScene(Galaxy.from_dict(data))
+        except FileNotFoundError:
+            self.show_message(f"Nothing saved yet ({path}): press F5 first")
+            return
+        except (OSError, scenario.ScenarioError) as error:
+            self.show_message(f"Could not load: {error}")
+            return
+        self.time.scale = min(TIME_SCALE_MAX, max(TIME_SCALE_MIN, document["time_scale"]))
+        self.show_message(f"Loaded {path}")
+
     def handle_menu_key(self, key: int) -> None:
         """Move the menu selection, start a scenario or quit."""
         if key == pygame.K_ESCAPE:
@@ -188,6 +248,10 @@ class SpaceSimulation3D:
                     pygame.event.set_grab(False)
                 elif event.key == pygame.K_n:
                     self.new_star_field()
+                elif event.key == pygame.K_F5:
+                    self.save_scene()
+                elif event.key == pygame.K_F9:
+                    self.load_scene()
                 elif event.key == pygame.K_p:
                     self.time.toggle_pause()
                 elif event.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
@@ -416,7 +480,10 @@ class SpaceSimulation3D:
                 f"Mouse Look: {'ON' if self.mouse_captured else 'OFF'}",
             ]
 
+        instructions = [*instructions[:-1], "F5 - Save, F9 - Load", instructions[-1]]
         self.draw_text_lines(instructions, 10, HUD_TEXT_COLOR, WHITE)
+        if self.message and pygame.time.get_ticks() / 1000.0 < self.message_until:
+            self.draw_centered(self.font, self.message, SCREEN_HEIGHT - 40, MENU_TITLE_COLOR)
         self.draw_text_lines(status_info, SCREEN_WIDTH - 280, HUD_STATUS_COLOR)
 
         # Crosshair

@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 from collections import deque
 from collections.abc import Sequence
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pygame
@@ -20,6 +20,7 @@ from .config import (
     TRAIL_LENGTH,
 )
 from .physics import Body, GravitySystem
+from .scenario import ScenarioError, color, number, vector
 
 if TYPE_CHECKING:
     from .camera import Camera
@@ -52,14 +53,58 @@ class SolarSystem:
         sun_mass: float = SUN_GRAVITY_MASS,
         planets: Sequence[tuple[float, float, Color]] = ORBITING_PLANETS,
     ) -> None:
-        self.sun = Body(sun_position, (0, 0, 0), sun_mass)
-        self.planets = []
-        for i, (orbit_radius, radius, color) in enumerate(planets):
+        sun = Body(sun_position, (0, 0, 0), sun_mass)
+        orbiting = []
+        for i, (orbit_radius, radius, planet_color) in enumerate(planets):
             angle = i * 2.4  # Spread the planets around their orbits
             position, velocity = circular_orbit(sun_mass, orbit_radius, angle)
-            self.planets.append(OrbitingPlanet(self.sun.position + position, velocity, 1.0, radius, color))
+            orbiting.append(OrbitingPlanet(sun.position + position, velocity, 1.0, radius, planet_color))
+        self._setup(sun, orbiting)
+
+    def _setup(self, sun: Body, planets: list[OrbitingPlanet]) -> None:
+        self.sun = sun
+        self.planets = planets
         self.gravity = GravitySystem([self.sun, *self.planets])
         self._since_trail_point = TRAIL_INTERVAL
+
+    def to_dict(self) -> dict[str, Any]:
+        """The state of the Sun and the planets, for `scenario.save`."""
+        return {
+            "sun": {
+                "position": self.sun.position.tolist(),
+                "velocity": self.sun.velocity.tolist(),
+                "mass": self.sun.mass,
+            },
+            "planets": [
+                {"position": p.position.tolist(), "velocity": p.velocity.tolist(), "mass": p.mass,
+                 "radius": p.radius, "color": list(p.color)}
+                for p in self.planets
+            ],
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> SolarSystem:
+        """Rebuild a Solar System saved with `to_dict` (validates every value)."""
+        sun_data = data.get("sun")
+        planets_data = data.get("planets")
+        if not isinstance(sun_data, dict) or not isinstance(planets_data, list):
+            raise ScenarioError("a Solar System needs a 'sun' and a list of 'planets'")
+        sun = Body(vector(sun_data.get("position"), "sun position"), vector(sun_data.get("velocity"), "sun velocity"),
+                   number(sun_data.get("mass"), "sun mass", positive=True))
+        planets = []
+        for i, p in enumerate(planets_data):
+            if not isinstance(p, dict):
+                raise ScenarioError(f"planet {i} must be an object")
+            planets.append(OrbitingPlanet(
+                vector(p.get("position"), f"planet {i} position"),
+                vector(p.get("velocity"), f"planet {i} velocity"),
+                number(p.get("mass"), f"planet {i} mass", positive=True),
+                number(p.get("radius"), f"planet {i} radius", positive=True),
+                color(p.get("color"), f"planet {i} color"),
+            ))
+        system = cls.__new__(cls)
+        system._setup(sun, planets)
+        return system
 
     def update(self, dt: float) -> None:
         """Advance the orbits by `dt` seconds and record the trails."""

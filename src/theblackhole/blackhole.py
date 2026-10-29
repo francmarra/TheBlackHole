@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import pygame
@@ -31,6 +31,7 @@ from .config import (
 )
 from .glow import draw_glow
 from .physics import Body, GravitySystem
+from .scenario import ScenarioError, number, vector
 from .starfield import StarField3D
 
 if TYPE_CHECKING:
@@ -219,6 +220,35 @@ class BlackHoleScene:
         self.star_field = StarField3D(BLACK_HOLE_STARS, with_sun=False)
         self.rocks: list[Rock] = []
         self.captured = 0  # Everything that crossed the event horizon so far
+
+    def to_dict(self) -> dict[str, Any]:
+        """The black hole, the rocks and the capture count (the disk and stars are regenerated on load)."""
+        return {
+            "black_hole": {"position": self.black_hole.position.tolist(), "mass": self.black_hole.mass},
+            "rocks": [{"position": r.position.tolist(), "velocity": r.velocity.tolist()} for r in self.rocks],
+            "captured": self.captured,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> BlackHoleScene:
+        """Rebuild a scene saved with `to_dict` (validates every value)."""
+        hole_data = data.get("black_hole")
+        rocks_data = data.get("rocks", [])
+        if not isinstance(hole_data, dict) or not isinstance(rocks_data, list):
+            raise ScenarioError("a black hole scene needs a 'black_hole' and a list of 'rocks'")
+        scene = cls()
+        scene.black_hole = BlackHole(vector(hole_data.get("position"), "black hole position"),
+                                     number(hole_data.get("mass"), "black hole mass", positive=True))
+        scene.rocks = []
+        for i, r in enumerate(rocks_data):
+            if not isinstance(r, dict):
+                raise ScenarioError(f"rock {i} must be an object")
+            scene.rocks.append(Rock(vector(r.get("position"), f"rock {i} position"),
+                                    vector(r.get("velocity"), f"rock {i} velocity"), mass=1.0))
+        scene.gravity = GravitySystem([scene.black_hole, *scene.rocks])
+        scene.disk = AccretionDisk(scene.black_hole)
+        scene.captured = int(number(data.get("captured", 0), "captured"))
+        return scene
 
     def throw_rock(self, position: ArrayLike, direction: ArrayLike) -> None:
         """Throw a rock from `position` along `direction`."""

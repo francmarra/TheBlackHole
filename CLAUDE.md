@@ -16,6 +16,7 @@ Simulação 3D com renderer próprio (pygame-ce + NumPy). Plano diário em `ROAD
 | `timecontrol.py` | `TimeControl` (pausa e velocidade da simulação) |
 | `blackhole.py` | `schwarzschild_radius`, `BlackHole` (horizonte, sombra), `BlackHoleScene` (cena da tecla B) |
 | `galaxy.py` | `rotation_speed`, `Galaxy` (3000 estrelas, curva de rotação plana), `GalaxyScene` |
+| `scenario.py` | `save`, `load`, `ScenarioError` e validadores (JSON dos cenários; F5/F9 em `saves/`) |
 | `aliases.py` | Aliases de tipos (`Vector`, `Color`, `Point2`, `Lens`, `ArrayLike`) |
 | `glow.py` | `glow_sprite` (cache), `draw_glow` (brilho com `BLEND_ADD`) |
 | `main.py` | `SpaceSimulation3D` (menu inicial, cenários `solar`/`blackhole`/`galaxy`, input, câmaras, HUD) + `main()` |
