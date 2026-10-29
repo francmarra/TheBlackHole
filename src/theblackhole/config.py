@@ -108,3 +108,7 @@ DISK_OUTER = 10.0             # Outer edge in r_s
 DISK_THICKNESS = 0.08         # Vertical spread as a fraction of the radius
 DISK_HOT_COLOR = (255, 240, 200)   # Inner edge
 DISK_COOL_COLOR = (200, 60, 20)    # Outer edge
+DISK_DRAG = 0.01              # Fraction of speed lost per second: the gas slowly spirals in (accretion)
+ROCK_SPEED = 300.0            # Speed of rocks thrown with F
+ROCK_RADIUS = 6.0
+ROCK_COLOR = (160, 150, 140)

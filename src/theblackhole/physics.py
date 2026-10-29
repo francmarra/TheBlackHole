@@ -23,9 +23,13 @@ class GravitySystem:
     """
 
     def __init__(self, bodies, g=GRAVITY_CONSTANT, softening=GRAVITY_SOFTENING):
-        self.bodies = list(bodies)
         self.g = g
         self.softening = softening
+        self._build(bodies)
+
+    def _build(self, bodies):
+        """(Re)create the arrays from the bodies' current state and point the bodies at them."""
+        self.bodies = list(bodies)
         self.positions = np.array([body.position for body in self.bodies], dtype=float).reshape(-1, 3)
         self.velocities = np.array([body.velocity for body in self.bodies], dtype=float).reshape(-1, 3)
         self.masses = np.array([body.mass for body in self.bodies], dtype=float)
@@ -35,6 +39,15 @@ class GravitySystem:
             body.velocity = self.velocities[i]
             body.acceleration = self.accelerations[i]
         self._compute_accelerations()
+
+    def add(self, body):
+        self._build([*self.bodies, body])
+
+    def remove(self, body):
+        self._build([b for b in self.bodies if b is not body])
+        # The removed body keeps its last state in its own arrays
+        body.position, body.velocity, body.acceleration = (
+            body.position.copy(), body.velocity.copy(), body.acceleration.copy())
 
     def _pairs(self):
         """Offsets between every pair of bodies (offsets[i, j] points from i to j) and softened distances²."""

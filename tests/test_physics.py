@@ -99,3 +99,16 @@ def test_vectorised_accelerations_match_pairwise_formula():
                 offset = b.position - a.position
                 expected += b.mass * offset / (offset @ offset + 0.25) ** 1.5
         assert a.acceleration == pytest.approx(expected)
+
+
+def test_adding_and_removing_bodies_keeps_the_others_state():
+    a, b = Body((0, 0, 0), (1, 0, 0), mass=5), Body((10, 0, 0), (0, 1, 0), mass=1)
+    system = GravitySystem([a])
+    system.step(0.1)
+    position_before = a.position.copy()
+    system.add(b)
+    assert a.position == pytest.approx(position_before)
+    assert a.acceleration[0] > 0  # b already pulls on a
+    system.remove(b)
+    system.step(0.1)
+    assert len(system.bodies) == 1 and a.acceleration == pytest.approx([0, 0, 0])

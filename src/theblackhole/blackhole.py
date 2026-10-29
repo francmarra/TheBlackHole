@@ -8,6 +8,7 @@ import pygame
 from .config import (
     BLACK_HOLE_MASS,
     DISK_COOL_COLOR,
+    DISK_DRAG,
     DISK_HOT_COLOR,
     DISK_INNER,
     DISK_OUTER,
@@ -16,6 +17,9 @@ from .config import (
     GRAVITY_CONSTANT,
     PHOTON_RING_COLOR,
     PHYSICS_MAX_STEP,
+    ROCK_COLOR,
+    ROCK_RADIUS,
+    ROCK_SPEED,
     SHADOW_FACTOR,
     SPEED_OF_LIGHT,
 )
@@ -86,10 +90,19 @@ class AccretionDisk:
         return GRAVITY_CONSTANT * self.black_hole.mass * offset / (dist2 * np.sqrt(dist2))[:, None]
 
     def step(self, dt):
+        """Advance the disk; returns how many particles crossed the horizon (they respawn outside)."""
         self.velocities += 0.5 * dt * self.accelerations
         self.positions += dt * self.velocities
         self.accelerations = self._accelerations()
         self.velocities += 0.5 * dt * self.accelerations
+        self.velocities *= 1 - DISK_DRAG * dt
+
+        distance = np.linalg.norm(self.positions - self.black_hole.position, axis=1)
+        captured = np.nonzero(distance < self.black_hole.horizon_radius)[0]
+        if len(captured):
+            self.spawn(captured)
+            self.accelerations[captured] = self._accelerations()[captured]
+        return len(captured)
 
     def draw(self, screen, camera, min_distance=0.0, max_distance=math.inf):
         cam = camera.to_camera_space(self.positions)
@@ -105,6 +118,13 @@ class AccretionDisk:
             pygame.draw.circle(screen, color, point, size)
 
 
+class Rock(Body):
+    """A small body thrown at the black hole."""
+
+    radius = ROCK_RADIUS
+    color = ROCK_COLOR
+
+
 class BlackHoleScene:
     """A black hole at the origin in front of a field of distant stars."""
 
@@ -113,18 +133,45 @@ class BlackHoleScene:
         self.gravity = GravitySystem([self.black_hole])
         self.disk = AccretionDisk(self.black_hole)
         self.star_field = StarField3D(with_sun=False)
+        self.rocks = []
+        self.captured = 0  # Everything that crossed the event horizon so far
+
+    def throw_rock(self, position, direction):
+        rock = Rock(position, np.asarray(direction, dtype=float) * ROCK_SPEED, mass=1.0)
+        self.rocks.append(rock)
+        self.gravity.add(rock)
 
     def update(self, dt, time):
         self.star_field.update(time)
         substeps = max(1, math.ceil(dt / PHYSICS_MAX_STEP))
         for _ in range(substeps):
             self.gravity.step(dt / substeps)
-            self.disk.step(dt / substeps)
+            self.captured += self.disk.step(dt / substeps)
+            self.capture_rocks()
+
+    def capture_rocks(self):
+        for rock in list(self.rocks):
+            if np.linalg.norm(rock.position - self.black_hole.position) < self.black_hole.horizon_radius:
+                self.rocks.remove(rock)
+                self.gravity.remove(rock)
+                self.captured += 1
+
+    def draw_rocks(self, screen, camera, min_distance=0.0, max_distance=math.inf):
+        for rock in self.rocks:
+            distance = float(np.linalg.norm(rock.position - camera.position))
+            projection = camera.project(*rock.position)
+            if projection is None or not min_distance <= distance < max_distance:
+                continue
+            x, y, depth = projection
+            radius_px = max(2, int(rock.radius * camera.focal_length / depth))
+            pygame.draw.circle(screen, rock.color, (int(x), int(y)), radius_px)
 
     def draw(self, screen, camera):
         hole_distance = float(np.linalg.norm(camera.position - self.black_hole.position))
         self.star_field.draw(screen, camera, min_distance=hole_distance)
         self.disk.draw(screen, camera, min_distance=hole_distance)
+        self.draw_rocks(screen, camera, min_distance=hole_distance)
         self.black_hole.draw(screen, camera)
         self.disk.draw(screen, camera, max_distance=hole_distance)
+        self.draw_rocks(screen, camera, max_distance=hole_distance)
         self.star_field.draw(screen, camera, max_distance=hole_distance)

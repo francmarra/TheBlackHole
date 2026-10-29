@@ -147,6 +147,9 @@ class SpaceSimulation3D:
                     self.toggle_mode()
                 elif event.key == pygame.K_b:
                     self.toggle_scene()
+                elif event.key == pygame.K_f and self.scene == "blackhole":
+                    start = self.camera.position + self.camera.forward * 20
+                    self.black_hole_scene.throw_rock(start, self.camera.forward)
                 elif event.key == pygame.K_SPACE and self.mode == "planet":
                     self.player.jump()
                 elif event.key == pygame.K_c:
@@ -339,6 +342,7 @@ class SpaceSimulation3D:
             "QE - Move up/down",
             "SHIFT - Fast movement",
             "Mouse (press C) / Arrows - Look around",
+            "F - Throw a rock",
             "P - Pause, +/- - Time speed",
             "B - Back to the Solar System",
             "ESC - Exit",
@@ -348,6 +352,7 @@ class SpaceSimulation3D:
             f"FPS: {self.clock.get_fps():.0f}",
             f"Time: {self.time.label()}",
             f"Event horizon: {hole.horizon_radius:.1f} units",
+            f"Captured: {self.black_hole_scene.captured}",
         ]
         return instructions, status_info
 
