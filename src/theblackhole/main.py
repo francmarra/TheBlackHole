@@ -39,6 +39,7 @@ from .planet import Planet
 from .player import Player
 from .solar_system import SolarSystem
 from .starfield import StarField3D
+from .timecontrol import TimeControl
 
 
 class SpaceSimulation3D:
@@ -55,6 +56,7 @@ class SpaceSimulation3D:
         self.player = self.create_player()
 
         self.camera = Camera()
+        self.time = TimeControl()
         self.mode = "planet"  # "planet" = third person on the planet, "free" = free-fly camera
 
         # Third-person camera
@@ -113,6 +115,12 @@ class SpaceSimulation3D:
                     self.running = False
                 elif event.key == pygame.K_n:
                     self.new_star_field()
+                elif event.key == pygame.K_p:
+                    self.time.toggle_pause()
+                elif event.key in (pygame.K_PLUS, pygame.K_EQUALS, pygame.K_KP_PLUS):
+                    self.time.faster()
+                elif event.key in (pygame.K_MINUS, pygame.K_KP_MINUS):
+                    self.time.slower()
                 elif event.key == pygame.K_TAB:
                     self.toggle_mode()
                 elif event.key == pygame.K_SPACE and self.mode == "planet":
@@ -190,7 +198,7 @@ class SpaceSimulation3D:
     def update(self, dt):
         time = pygame.time.get_ticks() / 1000.0
         self.star_field.update(time)
-        self.solar_system.update(dt)
+        self.solar_system.update(self.time.scaled(dt))
         self.player.update(dt)
         self.update_camera()
 
@@ -229,6 +237,7 @@ class SpaceSimulation3D:
                 "Mouse (press C) / Arrows - Turn and tilt camera",
                 "Mouse wheel - Zoom",
                 "TAB - Free camera",
+                "P - Pause orbits, +/- - Time speed",
                 "N - New stars",
                 "ESC - Exit",
             ]
@@ -239,6 +248,7 @@ class SpaceSimulation3D:
             longitude = math.degrees(math.atan2(player.normal[2], player.normal[0]))
             status_info = [
                 f"FPS: {self.clock.get_fps():.0f}",
+                f"Time: {self.time.label()}",
                 f"Latitude: {latitude:.1f}°",
                 f"Longitude: {longitude:.1f}°",
                 f"Altitude: {player.altitude:.1f}",
@@ -254,6 +264,7 @@ class SpaceSimulation3D:
                 "SHIFT - Fast movement",
                 "Mouse (press C) / Arrows - Look around",
                 "TAB - Back to the planet",
+                "P - Pause orbits, +/- - Time speed",
                 "N - New stars",
                 "ESC - Exit",
             ]
@@ -261,6 +272,7 @@ class SpaceSimulation3D:
             sun = self.star_field.sun
             status_info = [
                 f"FPS: {self.clock.get_fps():.0f}",
+                f"Time: {self.time.label()}",
                 f"Stars: {len(self.star_field.stars)}",
                 f"Orbiting Planets: {len(self.solar_system.planets)}",
                 f"Sun Mass: {sun.mass:.2e} kg",
