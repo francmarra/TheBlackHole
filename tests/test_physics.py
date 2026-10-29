@@ -53,3 +53,36 @@ def test_circular_orbit_returns_to_start_after_one_period():
         system.step(period / steps)
         assert np.linalg.norm(planet.position - sun.position) == pytest.approx(radius, rel=1e-3)
     assert planet.position == pytest.approx([radius, 0, 0], abs=0.05 * radius)
+
+
+def eccentric_binary():
+    """A light planet on an orbit with eccentricity 0.6 around a heavy star."""
+    star_mass, distance = 1000.0, 20.0
+    speed = 0.6 * math.sqrt(star_mass / distance)  # slower than circular -> ellipse
+    star = Body((0, 0, 0), (0, 0, 0), mass=star_mass)
+    planet = Body((distance, 0, 0), (0, speed, 0), mass=1.0)
+    return GravitySystem([star, planet], softening=0)
+
+
+def test_energy_is_conserved_over_many_eccentric_orbits():
+    system = eccentric_binary()
+    start = system.total_energy()
+    worst = 0.0
+    for _ in range(20_000):  # ~10 orbits
+        system.step(0.002)
+        worst = max(worst, abs(system.total_energy() - start))
+    # Velocity Verlet is symplectic: the error oscillates but does not grow
+    assert worst / abs(start) < 1e-4
+
+
+def test_explicit_euler_would_drift_much_more():
+    """Same orbit with a naive integrator, to show why Verlet was chosen."""
+    system = eccentric_binary()
+    start = system.total_energy()
+    for _ in range(20_000):
+        for body in system.bodies:
+            body.position += 0.002 * body.velocity
+        for body in system.bodies:
+            body.velocity += 0.002 * body.acceleration
+        system._compute_accelerations()
+    assert abs(system.total_energy() - start) / abs(start) > 1e-2

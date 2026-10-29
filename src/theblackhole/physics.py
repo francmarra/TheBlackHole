@@ -48,3 +48,14 @@ class GravitySystem:
 
     def total_momentum(self):
         return sum((body.mass * body.velocity for body in self.bodies), np.zeros(3))
+
+    def total_energy(self):
+        """Kinetic plus (softened) gravitational potential energy; constant for an exact integrator."""
+        kinetic = sum(0.5 * body.mass * (body.velocity @ body.velocity) for body in self.bodies)
+        potential = 0.0
+        eps2 = self.softening**2
+        for i, a in enumerate(self.bodies):
+            for b in self.bodies[i + 1 :]:
+                offset = b.position - a.position
+                potential -= self.g * a.mass * b.mass / np.sqrt(offset @ offset + eps2)
+        return kinetic + potential
