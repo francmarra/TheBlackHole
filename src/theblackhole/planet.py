@@ -3,7 +3,6 @@
 import math
 
 import numpy as np
-import pygame
 
 from .config import (
     AMBIENT_LIGHT,
@@ -19,7 +18,7 @@ from .config import (
     SCREEN_WIDTH,
     SHALLOW_OCEAN,
 )
-from .render import clip_polygon_near
+from .render import clip_polygon_near, fill_polygon
 
 
 class Planet:
@@ -143,4 +142,4 @@ class Planet:
                 if len(clipped) < 3:
                     continue
                 points = camera.project_camera_space(np.array(clipped)).tolist()
-            pygame.draw.polygon(screen, shaded[k], points)
+            fill_polygon(screen, shaded[k], points)

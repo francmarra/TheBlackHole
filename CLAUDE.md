@@ -22,6 +22,7 @@ Simulação 3D com renderer próprio (pygame-ce + NumPy). Plano diário em `ROAD
 - Python com dependências: `%LOCALAPPDATA%\Programs\Python\Python312\python.exe` (`py` não tem pygame).
 - Jogo: `cd src && <python> -m theblackhole`.
 - Testes: `<python> -m pytest -q` (na raiz; `pythonpath = src` no `pyproject.toml`).
+- Profiling sem janela: `<python> scripts/profile_frames.py [frames]` (ms por frame em cada modo + top 15 do cProfile).
 - Teste rápido sem janela (Git Bash), a partir de `src/`:
   `SDL_VIDEODRIVER=dummy <python> -c "import pygame,theblackhole.main as m;pygame.init();s=m.SpaceSimulation3D();[ (s.update(1/60),s.draw()) for _ in range(30)];s.toggle_mode();[(s.update(1/60),s.draw()) for _ in range(30)];print('ok')"`
 
