@@ -24,7 +24,7 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 
 ## Fase 2 — Física a sério (dias 8–14)
 
-- [ ] **Dia 8** — Motor de gravidade com integrador Velocity Verlet
+- [x] **Dia 8** — Motor de gravidade com integrador Velocity Verlet
 - [ ] **Dia 9** — Planetas em órbita do Sol
 - [ ] **Dia 10** — Rastos das órbitas (trails)
 - [ ] **Dia 11** — Controlo do tempo: pausa, acelerar e abrandar (`P`, `+`, `-`)
@@ -65,3 +65,4 @@ Plano de trabalho diário. **Uma tarefa por dia.** Marca `[x]` quando terminares
 | 5 | 2026-10-15 | Valores de afinação (estrelas, câmaras, LOD e cores do planeta, fato, HUD, dt máximo) passados para `config.py` |
 | 6 | 2026-10-29 | `pytest` com 13 testes da `Camera` em `tests/test_camera.py` (centro do ecrã, eixos, distância, plano near, single vs batch, yaw/pitch, `look_at`, base ortonormal); config em `pyproject.toml` |
 | 7 | 2026-10-29 | **Extra (pedido do Francisco, mesmo dia do Dia 6):** CI no GitHub Actions (`ruff` 0.17.3 fixo + `pytest`, Python 3.12) a cada push e PR; config do `ruff` no `pyproject.toml` (exclui a versão 2D antiga); 3 avisos corrigidos; badge no README |
+| 8 | 2026-10-29 | **Extra (mesmo dia):** `physics.py` com `Body` e `GravitySystem` (gravidade N-corpos com softening, integrador Velocity Verlet kick-drift-kick); constantes em `config.py`; 4 testes (linha reta, 3.ª lei de Newton, momento conservado, órbita circular fecha num período). Ainda não está ligado ao render (Dia 9) |
