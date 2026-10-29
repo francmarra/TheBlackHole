@@ -54,3 +54,27 @@ def test_disk_slowly_falls_in_and_refills():
     assert captured > 0
     distance = np.linalg.norm(disk.positions - disk.black_hole.position, axis=1)
     assert distance.min() >= disk.black_hole.horizon_radius
+
+
+def test_lens_images_obey_the_lens_equation():
+    from theblackhole.blackhole import lensed_offsets
+
+    outer, inner = lensed_offsets(beta=30.0, einstein_radius=50.0)
+    for theta in (outer, inner):
+        # Lens equation: beta = theta - θ_E² / theta
+        assert theta - 50.0**2 / theta == pytest.approx(30.0)
+    assert outer > 50.0 and inner < 0
+
+
+def test_star_right_behind_the_hole_becomes_an_einstein_ring_image():
+    from theblackhole.blackhole import lensed_offsets
+
+    outer, inner = lensed_offsets(beta=1e-9, einstein_radius=80.0)
+    assert outer == pytest.approx(80.0) and inner == pytest.approx(-80.0)
+
+
+def test_far_away_stars_are_barely_moved():
+    from theblackhole.blackhole import lensed_offsets
+
+    outer, _ = lensed_offsets(beta=1000.0, einstein_radius=10.0)
+    assert outer == pytest.approx(1000.0, rel=1e-3)

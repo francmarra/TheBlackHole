@@ -101,6 +101,7 @@ SPEED_OF_LIGHT = 316.0
 BLACK_HOLE_MASS = 2.0e6       # r_s = 2GM/c² ≈ 40 units
 BLACK_HOLE_START_CAMERA = (0.0, 250.0, -1100.0)
 SHADOW_FACTOR = 2.6           # The dark "shadow" seen from afar is ~2.6 r_s (photon capture radius)
+BLACK_HOLE_STARS = 1800       # Denser background so the lensing is easy to see
 PHOTON_RING_COLOR = (255, 170, 80)
 DISK_PARTICLES = 1500
 DISK_INNER = 3.0              # Inner edge of the disk in r_s (the innermost stable orbit of a real black hole)

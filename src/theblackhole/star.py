@@ -95,14 +95,22 @@ class Star3D:
 
         return screen_x, screen_y, depth, scale
 
-    def draw(self, screen, camera):
+    def draw(self, screen, camera, lens=None):
+        """Draw the star; `lens(x, y, distance)` can move it to one or more lensed images."""
         projection = self.project_to_2d(camera)
 
         if projection is None:
             return
 
         screen_x, screen_y, _depth, scale = projection
+        if lens is None:
+            self._draw_at(screen, screen_x, screen_y, scale)
+            return
+        distance = math.dist((self.x, self.y, self.z), camera._pos)
+        for image_x, image_y in lens(screen_x, screen_y, distance):
+            self._draw_at(screen, image_x, image_y, scale)
 
+    def _draw_at(self, screen, screen_x, screen_y, scale):
         # Skip if off screen
         if screen_x < -50 or screen_x > SCREEN_WIDTH + 50 or screen_y < -50 or screen_y > SCREEN_HEIGHT + 50:
             return

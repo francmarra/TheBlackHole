@@ -37,7 +37,7 @@ class Sun3D(Star3D):
 
         self.current_brightness = max(1.5, self.brightness + primary_twinkle + secondary_twinkle + solar_flare)
 
-    def draw(self, screen, camera):
+    def draw(self, screen, camera, lens=None):  # The Sun is never lensed
         projection = self.project_to_2d(camera)
 
         if projection is None:

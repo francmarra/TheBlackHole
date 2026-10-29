@@ -62,7 +62,7 @@ class StarField3D:
         for star in self.stars:
             star.update(time)
 
-    def draw(self, screen, camera, min_distance=0.0, max_distance=math.inf):
+    def draw(self, screen, camera, min_distance=0.0, max_distance=math.inf, lens=None):
         """Draw the stars whose distance to the camera is within [min_distance, max_distance)."""
         cx, cy, cz = camera._pos
         min_sq, max_sq = min_distance * min_distance, max_distance * max_distance
@@ -80,4 +80,4 @@ class StarField3D:
 
         # Draw stars
         for distance, star in star_distances:
-            star.draw(screen, camera)
+            star.draw(screen, camera, lens)
