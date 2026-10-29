@@ -9,7 +9,7 @@ description = "A 3D space simulation with a custom renderer written in Python"
 readme = "README.md"
 license = { file = "LICENSE" }
 authors = [{ name = "Francisco Brandão Marracho" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"  # numpy 2.3 needs 3.11
 dependencies = [
     "pygame-ce==2.5.8",
     "numpy==2.3.1",
@@ -29,7 +29,7 @@ pythonpath = ["src"]
 testpaths = ["tests"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 120
 # Legacy 2D version, kept as-is for reference
 extend-exclude = ["space_simulation.py"]

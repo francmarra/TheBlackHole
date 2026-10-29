@@ -1,6 +1,9 @@
 # TheBlackHole - 3D Space Simulation
 
 [![CI](https://github.com/francmarra/TheBlackHole/actions/workflows/ci.yml/badge.svg)](https://github.com/francmarra/TheBlackHole/actions/workflows/ci.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 A 3D space simulation with a custom renderer and real N-body physics, written in Python with Pygame and NumPy (no OpenGL). Walk on a planet while the planets orbit the Sun, fly around a black hole with an accretion disk and gravitational lensing, or watch the arms of a spiral galaxy wind up.
 
@@ -61,7 +64,7 @@ Start the program and pick a scenario in the menu (**Up/Down + Enter** or **1-3*
 
 ## Installation and running
 
-Python 3.10 or newer:
+Python 3.11 or newer:
 
 ```bash
 pip install -e .
